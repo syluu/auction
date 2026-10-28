@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-stringify.com/nest-cli-schema.json",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": { "deleteOutDir": true, "tsConfigPath": "tsconfig.json" }
+}

@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Auction Platform – System Design &amp; Stack Proposal</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --ink:#1b1f27; --muted:#5b6472; --line:#e3e6eb;
+    --accent:#1f6feb; --accent-soft:#e8f0fe; --ok:#1a7f37; --ok-soft:#e6f4ea;
+    --warn:#9a6700; --warn-soft:#fff8e1; --code-bg:#0f172a; --code-ink:#e2e8f0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1115; --panel:#171a21; --ink:#e6e8ee; --muted:#9aa3b2; --line:#2a2f3a;
+      --accent:#6ea8fe; --accent-soft:#1b2a44; --ok:#57c47a; --ok-soft:#13291b;
+      --warn:#e3b341; --warn-soft:#2d2410; --code-bg:#0b0f1a; --code-ink:#e2e8f0; }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 16px 80px}
+  header.hero{padding:28px 0 12px;border-bottom:1px solid var(--line);margin-bottom:28px}
+  header.hero h1{margin:0 0 6px;font-size:30px;line-height:1.2}
+  header.hero p{margin:0;color:var(--muted)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 11px;font-size:12.5px;font-weight:600}
+  nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:32px}
+  nav.toc ol{margin:6px 0 0;padding-left:20px;columns:2;column-gap:32px}
+  nav.toc li{margin:3px 0}
+  @media (max-width:640px){nav.toc ol{columns:1}}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  section{margin:44px 0}
+  h2{font-size:22px;margin:0 0 14px;padding-top:8px;border-top:3px solid var(--accent);display:inline-block}
+  h3{font-size:16.5px;margin:26px 0 8px}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-left:22px}
+  li{margin:4px 0}
+  table{border-collapse:collapse;width:100%;margin:12px 0;background:var(--panel);font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--accent-soft);font-weight:600}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.8px;line-height:1.5}
+  pre code{background:none;padding:0;color:inherit;font-size:inherit}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:14px 0}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:8px;margin:12px 0}
+  .callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+  .callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .kv{display:grid;grid-template-columns:170px 1fr;gap:4px 12px;font-size:14px}
+  .kv b{color:var(--muted);font-weight:600}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;background:var(--ok-soft);color:var(--ok);margin-left:6px;vertical-align:middle}
+  .tag.alt{background:var(--warn-soft);color:var(--warn)}
+  figure{margin:16px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto}
+  figcaption{color:var(--muted);font-size:13px;margin-top:8px;text-align:center}
+  svg text{font-family:inherit;font-size:12.5px;fill:var(--ink)}
+  svg .box{fill:var(--panel);stroke:var(--accent);stroke-width:1.5;rx:8}
+  svg .store{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5;rx:8}
+  svg .edge{stroke:var(--muted);stroke-width:1.5;fill:none;marker-end:url(#arr)}
+  svg .lbl{fill:var(--muted);font-size:11px}
+  .steps{counter-reset:s;list-style:none;padding:0}
+  .steps li{counter-increment:s;position:relative;padding-left:40px;margin:10px 0}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+  footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Live Auction Platform – System Design &amp; Stack Proposal</h1>
+  <p>Campaign-based online auctions with real-time bidding, anti-sniping time extension, outbid notifications and a winners board. Sized for 50–100 concurrent bidders, optimised for fast implementation. Prices in VND (default) or USD; UI in Vietnamese (default) or English; username/password login now, SSO later.</p>
+  <div class="chips">
+    <span class="chip">Next.js</span><span class="chip">NestJS</span><span class="chip">Socket.IO</span>
+    <span class="chip">PostgreSQL</span><span class="chip">Redis</span><span class="chip">Docker Compose</span><span class="chip">VND / USD</span><span class="chip">vi / en</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#summary">Recommendation at a glance</a></li>
+    <li><a href="#requirements">Requirements mapping</a></li>
+    <li><a href="#locale">Currency, language &amp; authentication</a></li>
+    <li><a href="#stack">Technology stack</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#data">Data model</a></li>
+    <li><a href="#lifecycle">Campaign &amp; auction lifecycle</a></li>
+    <li><a href="#bidding">Bid engine (concurrency)</a></li>
+    <li><a href="#extend">Anti-sniping extension</a></li>
+    <li><a href="#realtime">Real-time &amp; notifications</a></li>
+    <li><a href="#pages">Pages &amp; winners board</a></li>
+    <li><a href="#time">Time, scheduling &amp; reconnection</a></li>
+    <li><a href="#api">API surface</a></li>
+    <li><a href="#scale">Handling 50–100 concurrent users</a></li>
+    <li><a href="#edge">Edge cases</a></li>
+    <li><a href="#deploy">Deployment</a></li>
+    <li><a href="#plan">Implementation plan</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="summary">
+  <h2>1. Recommendation at a glance</h2>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">Stack</h3>
+      <div class="kv">
+        <b>Frontend</b><span>Next.js (React, App Router) + Tailwind CSS + socket.io-client</span>
+        <b>Backend</b><span>NestJS (TypeScript) – REST + Socket.IO gateway</span>
+        <b>Database</b><span>PostgreSQL 16+ via Prisma (raw SQL for the bid transaction)</span>
+        <b>Cache / jobs</b><span>Redis 7+ (rate limit, idempotency, Socket.IO adapter, BullMQ)</span>
+        <b>Infra</b><span>Docker Compose on one VPS (2 vCPU / 4 GB is plenty)</span>
+        <b>Locale</b><span>Currency VND (default) / USD per campaign · UI Vietnamese (default) / English</span>
+        <b>Auth</b><span>Username + password now (username-only mode for testing), provider abstraction ready for SSO</span>
+        <b>UI direction</b><span><b>Arena Live</b> (Direction A in <a href="auction-ui-ux-proposals.html#dirA">auction-ui-ux-proposals.html</a>): dark broadcast look, lime prices, red urgency, live bid ticker, “+30 giây” burst</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Key design decisions</h3>
+      <ul>
+        <li><b>Bids are written via REST</b>, state is pushed via WebSocket. Writes get proper HTTP errors, rate limits and idempotency keys.</li>
+        <li><b>One row lock per auction</b> (<code>SELECT … FOR UPDATE</code>) serialises every bid. Two users submitting the same price at the same time: first wins, second gets a clear "outbid" error.</li>
+        <li><b>Server clock is the only clock.</b> Clients render a countdown from a server-time offset.</li>
+        <li><b>Anti-sniping</b>: a bid inside the last <i>extend_window</i> seconds pushes <code>current_end_at</code> to <i>now + extend_by</i>.</li>
+        <li><b>Outbid alerts</b> target the previous leader's private socket room, play a sound and raise a browser Notification.</li>
+        <li><b>Winners board</b> is materialised into <code>auction_results</code> at auction end and ordered by <code>final_price − start_price</code>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout ok"><b>Why this stack:</b> one language (TypeScript) end-to-end, shared types between API and UI, Socket.IO handles reconnection/rooms out of the box, and PostgreSQL row locks give correct concurrency without building a custom matching engine. Everything runs on a single server for this load.</div>
+</section>
+
+<!-- 2 -->
+<section id="requirements">
+  <h2>2. Requirements mapping</h2>
+  <table>
+    <tr><th style="width:36px">#</th><th>Requirement</th><th>Where it lives in the design</th></tr>
+    <tr><td>1</td><td>Admin adds product: name, images, description, original price, start price, step price, end time, extend time…</td><td><code>products</code> + <code>auctions</code> tables, Admin UI, <code>POST /admin/products</code></td></tr>
+    <tr><td>2</td><td>Admin sets the start time and order of products in an auction</td><td><code>campaigns</code> with ordered <code>auctions</code> (<code>sort_order</code>, <code>start_at</code>), scheduler ticker</td></tr>
+    <tr><td>3</td><td>Users see the list of upcoming products with details, time and (optional) current price</td><td>Main page + <code>/auctions</code> list, <code>GET /campaigns/:id</code></td></tr>
+    <tr><td>4</td><td>Auction starts, user enters a new price and submits</td><td>Auction page, <code>POST /auctions/:id/bids</code>, bid engine (§8)</td></tr>
+    <tr><td>5</td><td>Bid near end time extends the end time by N seconds</td><td>Anti-sniping logic inside the bid transaction (§9)</td></tr>
+    <tr><td>6</td><td>User gets a sound + browser notification when outbid</td><td>Socket event <code>user:outbid</code> → Web Audio + Notification API (§10)</td></tr>
+    <tr><td>7</td><td>Auctions run as campaigns; main page lists auction products and the winners ordered by price gain</td><td><code>campaigns</code>, <code>auction_results.price_gain</code>, winners board query (§11)</td></tr>
+    <tr><td>8</td><td>Smooth for 50–100 simultaneous users, including same-price-same-time bids</td><td>Row lock + unique constraint, rate limiting, idempotency, capacity analysis (§14)</td></tr>
+    <tr><td>9</td><td>Currency: Vietnamese đồng (default) or USD</td><td><code>campaigns.currency</code>, locale-aware formatting, VND integer validation (§3)</td></tr>
+    <tr><td>10</td><td>Language: Vietnamese (default) / English</td><td>next-intl, <code>users.locale</code>, bilingual product fields (§3)</td></tr>
+    <tr><td>11</td><td>Login by username/password (or username only) for testing; SSO later</td><td>Local auth provider + <code>AUTH_MODE</code> flag, <code>AuthProvider</code> abstraction, <code>users.auth_provider/external_id</code> (§3)</td></tr>
+  </table>
+</section>
+
+<!-- 3 -->
+<section id="locale">
+  <h2>3. Currency, language &amp; authentication</h2>
+
+  <h3>Currency – VND default, USD optional</h3>
+  <ul>
+    <li><b>Per campaign.</b> <code>campaigns.currency</code> is <code>'VND'</code> (default) or <code>'USD'</code>; every auction in the campaign inherits it and every socket payload / API response carries it so the UI never guesses.</li>
+    <li><b>Storage.</b> One <code>NUMERIC(14,2)</code> column for both. VND has no minor units, so the API rejects non-integer VND amounts; USD allows cents. Suggested defaults: VND step 50.000 ₫, USD step $5.</li>
+    <li><b>Formatting</b> is done on the client with <code>Intl.NumberFormat</code>, driven by the UI locale and the campaign currency, never hard-coded:</li>
+  </ul>
+<pre><code>export function formatMoney(amount: string | number, currency: 'VND' | 'USD', locale: 'vi' | 'en') {
+  const tag = locale === 'vi' ? 'vi-VN' : 'en-US';
+  return new Intl.NumberFormat(tag, {
+    style: 'currency', currency,
+    maximumFractionDigits: currency === 'VND' ? 0 : 2,
+  }).format(Number(amount));
+}
+// formatMoney(1200000, 'VND', 'vi') → "1.200.000 ₫"
+// formatMoney(1200000, 'VND', 'en') → "₫1,200,000"
+// formatMoney(1250.5,  'USD', 'en') → "$1,250.50"</code></pre>
+  <ul>
+    <li><b>Bid input</b> is a locale-aware numeric field (thousand separators while typing, parsed back to a plain number before submit). Quick-bid buttons show the formatted absolute amount, not just “+1 step”.</li>
+    <li><b>No conversion.</b> A campaign is priced in exactly one currency; the winners board and exports use that currency. Mixed-currency reporting (if ever needed) is an admin-only concern.</li>
+  </ul>
+
+  <h3>Language – Vietnamese default, English optional</h3>
+  <ul>
+    <li><b>UI strings:</b> <code>next-intl</code> with locale-prefixed routes (<code>/vi/…</code> default, <code>/en/…</code>). Message catalogues in <code>messages/vi.json</code> and <code>messages/en.json</code>; the shared package exports the same keys for server-side messages (notification titles, error codes).</li>
+    <li><b>Locale resolution:</b> URL prefix → <code>users.locale</code> (if logged in) → <code>NEXT_LOCALE</code> cookie → <code>Accept-Language</code> → <code>vi</code>. A header switcher writes the cookie and <code>PATCH /auth/me</code>.</li>
+    <li><b>Content:</b> product/campaign <code>name</code> and <code>description</code> are JSONB <code>{ vi, en }</code>; the admin form shows both tabs, English optional, with fallback to Vietnamese at read time. Images and prices are language-independent.</li>
+    <li><b>Server-sent text:</b> socket events and API errors carry a <code>code</code> plus parameters (e.g. <code>{ code: 'BID_TOO_LOW', minAllowed }</code>); the client renders the sentence in the active language. Browser notifications are rendered client-side for the same reason.</li>
+    <li><b>Dates/times:</b> stored UTC, displayed in <code>Asia/Ho_Chi_Minh</code> by default via <code>Intl.DateTimeFormat</code> (24-hour in <code>vi</code>, 12-hour in <code>en</code>). Countdown labels (“còn 00:29” / “29 s left”) come from the catalogue.</li>
+  </ul>
+
+  <h3>Authentication – simple now, SSO-ready later</h3>
+  <table>
+    <tr><th style="width:200px">Phase</th><th>Behaviour</th></tr>
+    <tr><td><b>Now (test)</b> <code>AUTH_MODE=password</code></td><td>Login form with <b>username + password</b>. Users are created by admin (CSV import or form) or self-register. Passwords hashed with argon2. Session = our own JWT in an httpOnly cookie, 12 h, refreshed on activity.</td></tr>
+    <tr><td><b>Now (quick test)</b> <code>AUTH_MODE=username_only</code></td><td>Login form with <b>username only</b>; unknown usernames are auto-created as <code>user</code>. Admin accounts always require a password even in this mode. The API refuses to start with this mode when <code>NODE_ENV=production</code>.</td></tr>
+    <tr><td><b>Later</b> <code>AUTH_MODE=sso</code> (or <code>password,sso</code>)</td><td>Add an <code>OidcAuthProvider</code> (Keycloak, Azure AD, Google Workspace…) behind the same <code>AuthProvider</code> interface. Callback maps the token’s subject to <code>users(auth_provider, external_id)</code>, creating or linking (by email/username) on first login, then issues the <b>same session cookie</b>. Role can be derived from a group claim. SAML works the same way.</td></tr>
+  </table>
+<pre><code>// apps/api/src/modules/auth/auth-provider.ts
+export interface AuthProvider {
+  readonly name: 'local' | 'oidc' | 'saml';
+  authenticate(input: LoginInput): Promise&lt;Identity&gt;;   // throws on failure
+}
+export interface Identity { provider: string; externalId: string; username: string; email?: string; displayName: string; roles?: string[]; }
+
+// AuthService: provider-agnostic
+const identity = await provider.authenticate(input);
+const user     = await users.upsertFromIdentity(identity);   // internal id never changes
+return sessions.issueCookie(user);                            // JWT { sub: user.id, role, locale }</code></pre>
+  <p>Why this shape: bids, results and socket rooms all key on the <b>internal</b> <code>users.id</code>. Swapping the login mechanism therefore touches only the auth module and the login page; the bid engine, realtime gateway and data model stay untouched.</p>
+  <div class="callout warn"><b>Security notes for the test phase:</b> rate-limit <code>/auth/login</code> per IP, keep <code>username_only</code> mode off in production builds, and seed the admin account from an environment variable rather than a default password.</div>
+</section>
+
+<!-- 5 -->
+<section id="stack">
+  <h2>4. Technology stack</h2>
+  <h3>Option A – Recommended <span class="tag">TypeScript full-stack</span></h3>
+  <table>
+    <tr><th style="width:170px">Layer</th><th>Choice</th><th>Reason</th></tr>
+    <tr><td>Web app</td><td>Next.js (App Router) + Tailwind CSS + shadcn/ui + next-intl</td><td>Fast UI building, SSR for the public product list (SEO, instant first paint), one deployable; next-intl gives <code>/vi</code> and <code>/en</code> routing and locale-aware number/date formatting.</td></tr>
+    <tr><td>Realtime client</td><td>socket.io-client</td><td>Auto-reconnect, rooms, ack callbacks; works behind proxies (falls back to long-polling).</td></tr>
+    <tr><td>API</td><td>NestJS (Fastify adapter) + class-validator / zod</td><td>Modular structure (auth, products, campaigns, bids, realtime, scheduler), built-in WebSocket gateway, guards for admin role.</td></tr>
+    <tr><td>Realtime server</td><td>Socket.IO gateway inside NestJS</td><td>Per-auction rooms and per-user rooms; Redis adapter only if you later run &gt;1 instance.</td></tr>
+    <tr><td>Database</td><td>PostgreSQL 16+ with Prisma (schema/migrations) + raw SQL for <code>placeBid</code></td><td>Row-level locks, transactional consistency, <code>NUMERIC</code> money, partial indexes.</td></tr>
+    <tr><td>Redis</td><td>Redis 7+ (ioredis, BullMQ)</td><td>Rate limiter, idempotency keys, optional job queue for emails / web push, Socket.IO adapter.</td></tr>
+    <tr><td>Auth</td><td>Local provider: username + password (argon2) – or username-only in test mode. Own JWT session cookie, roles <code>user</code>/<code>admin</code>. <code>AuthProvider</code> interface so SSO (OIDC/SAML) plugs in later.</td><td>Zero dependencies for the test phase; the session layer never changes when SSO arrives (§3).</td></tr>
+    <tr><td>Files</td><td>Local disk via Nginx (MVP) → S3-compatible bucket later</td><td>Product images; upload through admin API.</td></tr>
+    <tr><td>Infra</td><td>Docker Compose: nginx, web, api, postgres, redis</td><td>One VPS, reproducible; CI with GitHub Actions.</td></tr>
+    <tr><td>Observability</td><td>pino logs, <code>/health</code>, Sentry (optional)</td><td>Enough for a campaign-sized event.</td></tr>
+    <tr><td>Load testing</td><td>k6 (HTTP) + artillery socket.io scenario</td><td>Prove 100 bidders before the first campaign.</td></tr>
+  </table>
+
+  <h3>Option B – If the team is PHP/Laravel <span class="tag alt">alternative</span></h3>
+  <p>Laravel + <b>Laravel Reverb</b> (first-party WebSocket server) + Laravel Echo + Inertia.js (Vue 3 or React) + MySQL 8 / PostgreSQL + Redis + Horizon for queues. The bid transaction uses <code>DB::transaction()</code> with <code>lockForUpdate()</code>. Every concept in this document maps 1:1; only the code snippets change.</p>
+
+  <h3>Option C – Smallest possible MVP <span class="tag alt">alternative</span></h3>
+  <p>Next.js + <b>Supabase</b> (Postgres, Auth, Realtime). The bid engine becomes a Postgres function <code>place_bid()</code> (same row-lock logic) called via RPC, and clients subscribe to row changes on <code>auctions</code>. Trade-off: targeted "you were outbid" pushes need a DB trigger + Edge Function, and you depend on a hosted service's realtime limits. Good for a one-off event, less flexible long-term.</p>
+</section>
+
+<!-- 5 -->
+<section id="architecture">
+  <h2>5. Architecture</h2>
+  <figure>
+    <svg viewBox="0 0 960 440" width="100%" role="img" aria-label="Architecture diagram">
+      <defs><marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a93a3"/></marker></defs>
+      <!-- clients -->
+      <rect class="box" x="20" y="40" width="170" height="70"/><text x="105" y="68" text-anchor="middle" font-weight="600">Bidder browser</text><text class="lbl" x="105" y="88" text-anchor="middle">Next.js UI · socket.io-client</text>
+      <rect class="box" x="20" y="150" width="170" height="70"/><text x="105" y="178" text-anchor="middle" font-weight="600">Admin browser</text><text class="lbl" x="105" y="198" text-anchor="middle">/admin pages</text>
+      <!-- nginx -->
+      <rect class="box" x="260" y="95" width="130" height="70"/><text x="325" y="123" text-anchor="middle" font-weight="600">Nginx</text><text class="lbl" x="325" y="143" text-anchor="middle">TLS · /api · /socket.io</text>
+      <!-- web -->
+      <rect class="box" x="450" y="20" width="200" height="60"/><text x="550" y="44" text-anchor="middle" font-weight="600">Next.js server</text><text class="lbl" x="550" y="64" text-anchor="middle">SSR pages, static assets</text>
+      <!-- api -->
+      <rect class="box" x="450" y="110" width="200" height="190"/>
+      <text x="550" y="134" text-anchor="middle" font-weight="600">NestJS API (one process)</text>
+      <rect class="store" x="465" y="148" width="170" height="30"/><text x="550" y="168" text-anchor="middle">REST: auth · products · bids</text>
+      <rect class="store" x="465" y="186" width="170" height="30"/><text x="550" y="206" text-anchor="middle">Socket.IO gateway (rooms)</text>
+      <rect class="store" x="465" y="224" width="170" height="30"/><text x="550" y="244" text-anchor="middle">Bid engine (tx + row lock)</text>
+      <rect class="store" x="465" y="262" width="170" height="30"/><text x="550" y="282" text-anchor="middle">Scheduler tick (1 s)</text>
+      <!-- stores -->
+      <rect class="store" x="740" y="110" width="190" height="70"/><text x="835" y="138" text-anchor="middle" font-weight="600">PostgreSQL</text><text class="lbl" x="835" y="158" text-anchor="middle">source of truth</text>
+      <rect class="store" x="740" y="220" width="190" height="80"/><text x="835" y="248" text-anchor="middle" font-weight="600">Redis</text><text class="lbl" x="835" y="268" text-anchor="middle">rate limit · idempotency</text><text class="lbl" x="835" y="284" text-anchor="middle">queue · socket adapter (opt.)</text>
+      <!-- storage -->
+      <rect class="store" x="740" y="340" width="190" height="60"/><text x="835" y="366" text-anchor="middle" font-weight="600">Image storage</text><text class="lbl" x="835" y="384" text-anchor="middle">local disk → S3 later</text>
+      <!-- edges -->
+      <path class="edge" d="M190,75 L260,115"/><path class="edge" d="M190,185 L260,145"/>
+      <path class="edge" d="M390,115 L450,55"/><path class="edge" d="M390,130 L450,165"/>
+      <path class="edge" d="M390,140 L450,205"/>
+      <path class="edge" d="M650,165 L740,145"/><path class="edge" d="M650,250 L740,255"/>
+      <path class="edge" d="M650,290 L740,365"/>
+      <text class="lbl" x="412" y="80">HTML</text><text class="lbl" x="400" y="178">HTTPS</text><text class="lbl" x="400" y="222">WS</text>
+      <text class="lbl" x="684" y="145">SQL</text>
+    </svg>
+    <figcaption>Single-server deployment. The API process hosts REST, the WebSocket gateway and the 1-second scheduler; Postgres is the only source of truth.</figcaption>
+  </figure>
+
+  <h3>Component responsibilities</h3>
+  <table>
+    <tr><th style="width:200px">Component</th><th>Responsibility</th></tr>
+    <tr><td>Next.js web</td><td>Public pages (main, product list, auction detail), admin pages, countdown rendering, sound/notification handling.</td></tr>
+    <tr><td>REST API</td><td>Auth, product/campaign CRUD, read endpoints, <b>bid placement</b>. All validation and authorisation.</td></tr>
+    <tr><td>Socket.IO gateway</td><td>Authenticates socket from the JWT cookie, joins <code>user:{id}</code>; clients join <code>auction:{id}</code> / <code>campaign:{id}</code> rooms. Pushes state deltas and private outbid alerts. Never accepts writes.</td></tr>
+    <tr><td>Bid engine</td><td>Single transaction: lock auction row → validate → insert bid → maybe extend → update auction → commit → publish events.</td></tr>
+    <tr><td>Scheduler</td><td>Every second: flip <code>pending→live</code> when <code>start_at</code> reached, flip <code>live→ended</code> when <code>current_end_at</code> passed, write <code>auction_results</code>, broadcast.</td></tr>
+    <tr><td>Redis</td><td>Sliding-window rate limit per user, idempotency keys for bids (60 s), optional BullMQ queue for emails / web-push, Socket.IO adapter when scaling out.</td></tr>
+  </table>
+</section>
+
+<!-- 6 -->
+<section id="data">
+  <h2>6. Data model</h2>
+  <p>Products are catalogue items; an <b>auction</b> is one product offered inside one campaign with its own pricing/timing rules. The admin form creates both in one step, but the separation lets you re-list a product in a later campaign.</p>
+<pre><code>CREATE TYPE campaign_status AS ENUM ('draft','scheduled','live','finished');
+CREATE TYPE auction_status  AS ENUM ('pending','live','ended','cancelled');
+
+CREATE TABLE users (
+  id            BIGSERIAL PRIMARY KEY,
+  username      TEXT UNIQUE NOT NULL,               -- login name (test phase) / mapped from SSO later
+  email         TEXT UNIQUE,                         -- optional now, filled by SSO later
+  display_name  TEXT NOT NULL,
+  password_hash TEXT,                                -- NULL in username-only test mode or for SSO users
+  auth_provider TEXT NOT NULL DEFAULT 'local',       -- 'local' | 'oidc' | 'saml' …
+  external_id   TEXT,                                -- subject id from the SSO provider
+  locale        TEXT NOT NULL DEFAULT 'vi',          -- 'vi' | 'en'
+  role          TEXT NOT NULL DEFAULT 'user',        -- 'user' | 'admin'
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (auth_provider, external_id)
+);
+
+CREATE TABLE products (
+  id             BIGSERIAL PRIMARY KEY,
+  name           JSONB NOT NULL,                     -- {"vi": "...", "en": "..."}  (en falls back to vi)
+  description    JSONB NOT NULL DEFAULT '{}',        -- same shape
+  images         JSONB NOT NULL DEFAULT '[]',        -- [{url, alt}]
+  original_price NUMERIC(14,2) NOT NULL,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE campaigns (
+  id         BIGSERIAL PRIMARY KEY,
+  name       JSONB NOT NULL,                         -- {"vi": "...", "en": "..."}
+  currency   CHAR(3) NOT NULL DEFAULT 'VND' CHECK (currency IN ('VND','USD')),
+  status     campaign_status NOT NULL DEFAULT 'draft',
+  start_at   TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE auctions (
+  id               BIGSERIAL PRIMARY KEY,
+  campaign_id      BIGINT NOT NULL REFERENCES campaigns(id),
+  product_id       BIGINT NOT NULL REFERENCES products(id),
+  sort_order       INT NOT NULL,
+  status           auction_status NOT NULL DEFAULT 'pending',
+  start_price      NUMERIC(14,2) NOT NULL,
+  step_price       NUMERIC(14,2) NOT NULL,
+  extend_window_s  INT NOT NULL DEFAULT 30,   -- a bid in the last N s triggers extension
+  extend_by_s      INT NOT NULL DEFAULT 30,   -- extension length
+  max_extensions   INT,                       -- NULL = unlimited
+  extension_count  INT NOT NULL DEFAULT 0,
+  start_at         TIMESTAMPTZ NOT NULL,
+  end_at           TIMESTAMPTZ NOT NULL,      -- planned end (never changes)
+  current_end_at   TIMESTAMPTZ NOT NULL,      -- effective end (moves on extension)
+  current_price    NUMERIC(14,2),             -- NULL until first bid
+  leading_bid_id   BIGINT,
+  leading_user_id  BIGINT,
+  bid_count        INT NOT NULL DEFAULT 0,
+  version          INT NOT NULL DEFAULT 0,    -- +1 on every change; clients use it to drop stale events
+  UNIQUE (campaign_id, sort_order)
+);
+CREATE INDEX auctions_live_end_idx ON auctions (current_end_at) WHERE status = 'live';
+CREATE INDEX auctions_pending_start_idx ON auctions (start_at) WHERE status = 'pending';
+
+CREATE TABLE bids (
+  id         BIGSERIAL PRIMARY KEY,
+  auction_id BIGINT NOT NULL REFERENCES auctions(id),
+  user_id    BIGINT NOT NULL REFERENCES users(id),
+  amount     NUMERIC(14,2) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (auction_id, amount)                 -- hard guarantee: no two bids at the same price
+);
+CREATE INDEX bids_auction_idx ON bids (auction_id, amount DESC);
+
+CREATE TABLE auction_results (                -- materialised at auction end
+  auction_id  BIGINT PRIMARY KEY REFERENCES auctions(id),
+  campaign_id BIGINT NOT NULL,
+  winner_id   BIGINT REFERENCES users(id),    -- NULL = no bids
+  start_price NUMERIC(14,2) NOT NULL,
+  final_price NUMERIC(14,2),
+  price_gain  NUMERIC(14,2) GENERATED ALWAYS AS (final_price - start_price) STORED,
+  ended_at    TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX results_gain_idx ON auction_results (campaign_id, price_gain DESC);
+
+CREATE TABLE bid_idempotency (                -- or keep this in Redis with 60 s TTL
+  key        UUID PRIMARY KEY,
+  user_id    BIGINT NOT NULL,
+  response   JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);</code></pre>
+  <div class="callout"><b>Money:</b> always <code>NUMERIC(14,2)</code> in the DB and a decimal library (or integer minor units) in code. Never <code>float</code>. For VND campaigns the API additionally enforces whole-đồng amounts (<code>amount = trunc(amount)</code>), so the same column serves both currencies. The currency is fixed per campaign; prices are never converted.</div>
+</section>
+
+<!-- 7 -->
+<section id="lifecycle">
+  <h2>7. Campaign &amp; auction lifecycle</h2>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">Campaign</h3>
+      <p><code>draft</code> → <code>scheduled</code> (admin sets <code>start_at</code> and item order) → <code>live</code> (first item starts, or admin clicks "Start now") → <code>finished</code> (last item ended).</p>
+      <p>Admin "Start now" simply sets the first item's <code>start_at = now()</code>; the scheduler does the rest.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Auction item</h3>
+      <p><code>pending</code> → <code>live</code> (at <code>start_at</code>) → <code>ended</code> (at <code>current_end_at</code>) · <code>cancelled</code> by admin at any time.</p>
+      <p>Two ordering modes, chosen per campaign:</p>
+      <ul>
+        <li><b>Scheduled</b>: each item has its own <code>start_at</code>/<code>end_at</code>; items may overlap.</li>
+        <li><b>Sequential</b>: item <i>k+1</i> starts <i>gap</i> seconds after item <i>k</i> actually ends (including extensions). The scheduler sets its <code>start_at</code> when the previous one ends.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Scheduler tick (runs every second in the API process)</h3>
+<pre><code>-- 1) start items whose time has come
+UPDATE auctions SET status = 'live', version = version + 1
+ WHERE status = 'pending' AND start_at &lt;= now()
+RETURNING id, campaign_id;
+
+-- 2) end items whose effective end has passed, and materialise the result
+WITH ended AS (
+  UPDATE auctions SET status = 'ended', version = version + 1
+   WHERE status = 'live' AND current_end_at &lt;= now()
+  RETURNING *
+)
+INSERT INTO auction_results (auction_id, campaign_id, winner_id, start_price, final_price, ended_at)
+SELECT id, campaign_id, leading_user_id, start_price, current_price, now() FROM ended
+RETURNING *;</code></pre>
+  <div class="callout ok"><b>Why this is race-safe:</b> the <code>UPDATE … WHERE status='live' AND current_end_at &lt;= now()</code> waits for any in-flight bid transaction holding the row lock, then <b>re-evaluates the WHERE clause on the fresh row</b> (PostgreSQL READ COMMITTED semantics). If the bid just extended the end time, the item is not ended. No bid can slip in after "ended" because the bid transaction checks <code>status = 'live'</code> under the same lock.</div>
+  <p>Run the tick in exactly one process. With a single API instance that is automatic; with several, guard it with a Redis lock (<code>SET scheduler:lock NX PX 1500</code>).</p>
+</section>
+
+<!-- 8 -->
+<section id="bidding">
+  <h2>8. Bid engine – the critical path</h2>
+  <h3>Rules</h3>
+  <ul>
+    <li>Auction must be <code>live</code> and <code>now() &lt; current_end_at</code> (server time).</li>
+    <li>Minimum bid = <code>start_price</code> if no bids yet, else <code>current_price + step_price</code>.</li>
+    <li>Amount must be a multiple of <code>step_price</code> above the base (optional, keeps the UI's quick-bid buttons consistent).</li>
+    <li>The current leader cannot raise their own bid (configurable).</li>
+    <li>Everything happens in <b>one transaction holding the auction row lock</b>.</li>
+  </ul>
+
+  <h3>Sequence</h3>
+  <ol class="steps">
+    <li>Client <code>POST /auctions/42/bids</code> with <code>{ amount, idempotencyKey }</code> (cookie JWT).</li>
+    <li>Guard: authenticated · rate limit (e.g. 3 bids / 2 s per user) · idempotency key not seen before.</li>
+    <li><code>BEGIN; SELECT … FROM auctions WHERE id = 42 FOR UPDATE</code> – all other bids for this auction now queue behind this one (a few ms each).</li>
+    <li>Validate status, time and amount against the <b>locked</b> row.</li>
+    <li><code>INSERT INTO bids</code> (the unique constraint on <code>(auction_id, amount)</code> is a second safety net).</li>
+    <li>If <code>current_end_at − now() ≤ extend_window_s</code>, set <code>current_end_at = current_end_at + extend_by_s</code>.</li>
+    <li><code>UPDATE auctions SET current_price, leading_*, bid_count+1, current_end_at, version+1</code>. <code>COMMIT</code>.</li>
+    <li><b>After commit</b>: broadcast <code>auction:bid</code> to room <code>auction:42</code>; emit <code>user:outbid</code> to room <code>user:{previousLeaderId}</code>; broadcast a compact <code>campaign:tick</code> to the main page room.</li>
+    <li>Respond <code>201 { auction snapshot }</code>. On validation failure respond <code>409 { code, minAllowed, currentPrice, version }</code> so the UI can offer a one-click re-bid.</li>
+  </ol>
+
+  <h3>Reference implementation (NestJS service, raw SQL through Prisma)</h3>
+<pre><code>export class BidsService {
+  constructor(private prisma: PrismaService, private rt: RealtimeGateway) {}
+
+  async placeBid(auctionId: number, userId: number, amount: Decimal) {
+    const result = await this.prisma.$transaction(async (tx) =&gt; {
+      // 1. Serialise every bid on this auction
+      const [a] = await tx.$queryRaw&lt;Auction[]&gt;`
+        SELECT *, now() AS server_now FROM auctions WHERE id = ${auctionId} FOR UPDATE`;
+      if (!a) throw new NotFoundException();
+
+      // 2. Validate against the LOCKED row and the SERVER clock
+      if (a.status !== 'live' || a.server_now &gt;= a.current_end_at)
+        throw new BidRejected('AUCTION_CLOSED', a);
+      if (a.leading_user_id === userId)
+        throw new BidRejected('ALREADY_LEADING', a);
+      const minAllowed = a.current_price === null ? a.start_price : a.current_price.plus(a.step_price);
+      if (amount.lt(minAllowed))
+        throw new BidRejected('BID_TOO_LOW', a, { minAllowed });
+
+      // 3. Record the bid
+      const [bid] = await tx.$queryRaw&lt;Bid[]&gt;`
+        INSERT INTO bids (auction_id, user_id, amount)
+        VALUES (${auctionId}, ${userId}, ${amount}) RETURNING *`;
+
+      // 4. Anti-sniping
+      const remainingMs = a.current_end_at.getTime() - a.server_now.getTime();
+      const canExtend = a.max_extensions === null || a.extension_count &lt; a.max_extensions;
+      const extended = canExtend &amp;&amp; remainingMs &lt;= a.extend_window_s * 1000;
+      const newEnd = extended ? new Date(a.current_end_at.getTime() + a.extend_by_s * 1000) : a.current_end_at;
+
+      // 5. Update auction state
+      const [updated] = await tx.$queryRaw&lt;Auction[]&gt;`
+        UPDATE auctions SET
+          current_price = ${amount}, leading_bid_id = ${bid.id}, leading_user_id = ${userId},
+          bid_count = bid_count + 1, current_end_at = ${newEnd},
+          extension_count = extension_count + ${extended ? 1 : 0}, version = version + 1
+        WHERE id = ${auctionId} RETURNING *`;
+
+      return { bid, auction: updated, previousLeaderId: a.leading_user_id, extended };
+    }, { isolationLevel: 'ReadCommitted', timeout: 5000 });
+
+    // 6. Publish only after the commit succeeded
+    this.rt.broadcastBid(result);
+    if (result.previousLeaderId &amp;&amp; result.previousLeaderId !== userId)
+      this.rt.notifyOutbid(result.previousLeaderId, result);
+    return result;
+  }
+}</code></pre>
+
+  <div class="callout"><b>Same price, same millisecond:</b> user A and user B both send 1,200,000. A acquires the row lock first, inserts, sets <code>current_price = 1,200,000</code>, commits. B then acquires the lock, reads the fresh row, computes <code>minAllowed = 1,200,000 + step</code>, and fails with <code>BID_TOO_LOW</code>. B's UI shows "Someone bid 1,200,000 a moment ago – bid 1,250,000?" with a one-click button. The unique index would reject the duplicate even if the application logic had a bug.</div>
+
+  <h3>Alternative: Redis Lua script</h3>
+  <p>A Lua script in Redis (atomic by design) can hold the hot auction state and validate/apply bids in ~0.1 ms, with Postgres written asynchronously. This is what you would do at thousands of bids per second. At 100 users it adds a second source of truth and a recovery path for no benefit. <b>Stay with the Postgres row lock.</b></p>
+</section>
+
+<!-- 9 -->
+<section id="extend">
+  <h2>9. Anti-sniping extension</h2>
+  <div class="kv" style="margin:10px 0 14px">
+    <b>extend_window_s</b><span>If a valid bid lands when <code>current_end_at − now ≤ window</code>, extension triggers (e.g. 30 s).</span>
+    <b>extend_by_s</b><span>New end = <code>current_end_at + extend_by</code> (e.g. 30 s): every qualifying bid adds N seconds. <i>Implemented this way (2026-10-26); the alternative “ensure at least N seconds remain” (<code>max(current_end, now + N)</code>) grows slower and is a one-line change.</i></span>
+    <b>max_extensions</b><span>Optional cap so an item cannot run forever (e.g. 20). <code>NULL</code> = unlimited.</span>
+  </div>
+  <p>Admin UI exposes all three per product with defaults from the campaign. The planned <code>end_at</code> is kept for reporting; the UI shows <code>current_end_at</code> and a small "+30 s extended" badge when the <code>auction:bid</code> event carries <code>extended: true</code>.</p>
+  <p>Because the extension decision is made inside the same locked transaction as the bid, there is no window where the scheduler could end the auction between "bid accepted" and "end time moved".</p>
+</section>
+
+<!-- 10 -->
+<section id="realtime">
+  <h2>10. Real-time &amp; notifications</h2>
+  <h3>Rooms</h3>
+  <ul>
+    <li><code>user:{userId}</code> – joined automatically after socket auth; receives private events.</li>
+    <li><code>auction:{auctionId}</code> – joined on the auction page; full bid stream.</li>
+    <li><code>campaign:{campaignId}</code> – joined on the main page; compact updates (price, end time, status) for every item plus winners-board changes.</li>
+  </ul>
+  <h3>Events</h3>
+  <table>
+    <tr><th style="width:190px">Event</th><th style="width:110px">Direction</th><th>Payload / purpose</th></tr>
+    <tr><td><code>auction:join</code> / <code>auction:leave</code></td><td>client → server</td><td><code>{ auctionId }</code>. Server replies with <code>auction:state</code>.</td></tr>
+    <tr><td><code>auction:state</code></td><td>server → client</td><td>Full snapshot: auction row, last 20 bids (bidder names masked), <code>serverTime</code>. Sent on join and after reconnect.</td></tr>
+    <tr><td><code>auction:bid</code></td><td>server → room</td><td><code>{ auctionId, amount, bidderMasked, bidCount, currentEndAt, extended, version, serverTime }</code></td></tr>
+    <tr><td><code>auction:started</code> / <code>auction:ended</code></td><td>server → room + campaign</td><td><code>{ auctionId, status, winnerMasked?, finalPrice?, version }</code></td></tr>
+    <tr><td><code>user:outbid</code></td><td>server → user room</td><td><code>{ auctionId, productName, yourBid, newPrice, currentEndAt }</code> → sound + browser notification.</td></tr>
+    <tr><td><code>user:won</code></td><td>server → user room</td><td>At auction end for the leader.</td></tr>
+    <tr><td><code>campaign:tick</code></td><td>server → campaign room</td><td><code>{ auctionId, currentPrice, currentEndAt, status, version }</code> for the main page cards.</td></tr>
+    <tr><td><code>time:sync</code></td><td>server → all (every 15 s)</td><td><code>{ serverTime }</code> to keep countdowns honest.</td></tr>
+  </table>
+  <p>Payloads carry <code>version</code>; the client ignores any event whose version is ≤ the version it already holds, so out-of-order delivery or a replayed snapshot cannot move the UI backwards.</p>
+
+  <h3>Client: sound + browser notification</h3>
+<pre><code>// Browsers block audio and Notification prompts until a user gesture.
+// Unlock both on the first click of "Place bid" / "Enable alerts".
+const outbidSound = new Audio('/sounds/outbid.mp3'); outbidSound.preload = 'auto';
+
+async function enableAlerts() {
+  try { await outbidSound.play(); outbidSound.pause(); outbidSound.currentTime = 0; } catch {}
+  if ('Notification' in window &amp;&amp; Notification.permission === 'default')
+    await Notification.requestPermission();
+}
+
+socket.on('user:outbid', (e) =&gt; {
+  outbidSound.play().catch(() =&gt; {});
+  toast.warning(`You were outbid on ${e.productName}. New price ${fmt(e.newPrice)}`,
+                { action: { label: 'Bid again', onClick: () =&gt; router.push(`/auctions/${e.auctionId}`) } });
+  if (Notification.permission === 'granted' &amp;&amp; document.visibilityState === 'hidden') {
+    const n = new Notification(`Outbid: ${e.productName}`, {
+      body: `New price ${fmt(e.newPrice)} – ends ${fmtTime(e.currentEndAt)}`,
+      tag: `outbid-${e.auctionId}`,          // replaces previous alert for the same item
+      icon: '/icons/auction-192.png',
+    });
+    n.onclick = () =&gt; { window.focus(); router.push(`/auctions/${e.auctionId}`); };
+  }
+});</code></pre>
+  <div class="callout warn"><b>Scope note:</b> the Notification API only works while a tab with the site is open (even in the background). Alerts for users who closed the browser need Web Push (service worker + VAPID) and/or email, which is a clean phase-2 addition using the same <code>user:outbid</code> hook.</div>
+</section>
+
+<!-- 11 -->
+<section id="pages">
+  <h2>11. Pages &amp; winners board</h2>
+  <table>
+    <tr><th style="width:220px">Page</th><th>Content</th></tr>
+    <tr><td><b>Main page</b> <code>/</code></td><td>Active campaign banner · "Live now" cards (image, current price, countdown, bid count, Bid button) · "Up next" list in admin order with start times · <b>Winners board</b> (rank, masked winner, product, start → final price, gain) ordered by gain desc, updated live.</td></tr>
+    <tr><td><b>Auction list</b> <code>/auctions</code></td><td>All items in the campaign grouped by status; filters; same card component.</td></tr>
+    <tr><td><b>Auction detail</b> <code>/auctions/[id]</code></td><td>Gallery, description, original price · Price panel: current price, your status (leading / outbid / not bid), countdown with extension badge · Bid form: amount input pre-filled with minimum, quick buttons +1×/+2×/+5× step, submit with inline error from 409 · Bid history (masked names, time).</td></tr>
+    <tr><td><b>My bids</b> <code>/me</code></td><td>Items I'm leading / outbid on / won.</td></tr>
+    <tr><td><b>Admin: products</b> <code>/admin/products</code></td><td>CRUD with image upload; fields: name, description, images, original price, start price, step price, extend window, extend by, max extensions.</td></tr>
+    <tr><td><b>Admin: campaigns</b> <code>/admin/campaigns/[id]</code></td><td>Add products, drag to reorder, set start/end (or sequential mode + gap), "Start now", cancel item, live monitor with full bidder identities and the ability to export results (CSV).</td></tr>
+  </table>
+  <h3>Winners board query</h3>
+<pre><code>SELECT r.auction_id, u.display_name AS winner, p.name AS product,
+       r.start_price, r.final_price, r.price_gain, r.ended_at
+  FROM auction_results r
+  JOIN auctions a ON a.id = r.auction_id
+  JOIN products p ON p.id = a.product_id
+  LEFT JOIN users u ON u.id = r.winner_id
+ WHERE r.campaign_id = $1 AND r.winner_id IS NOT NULL
+ ORDER BY r.price_gain DESC, r.ended_at ASC
+ LIMIT 50;</code></pre>
+  <p>Served with a 2-second HTTP cache header; the main page also receives <code>auction:ended</code> over the campaign room and refetches, so the board updates within a second of each close. Public views show masked names (e.g. <code>Ng***n</code>); admins see full names.</p>
+</section>
+
+<!-- 12 -->
+<section id="time">
+  <h2>12. Time, scheduling &amp; reconnection</h2>
+  <h3>Server-authoritative clock</h3>
+  <p>Every snapshot and event includes <code>serverTime</code>. The client keeps <code>offset = serverTime − Date.now()</code> (smoothed) and renders <code>current_end_at − (Date.now() + offset)</code>. A bid is never rejected on the client because of time; the server decides, and the client shows the 409 message if it was late.</p>
+  <h3>Reconnection</h3>
+  <ol>
+    <li>Socket.IO reconnects automatically with backoff.</li>
+    <li>On <code>connect</code>, the client re-emits <code>auction:join</code> for the page it is on; the server replies with a fresh <code>auction:state</code>.</li>
+    <li>The client compares <code>version</code> and replaces its state if the snapshot is newer.</li>
+    <li>While disconnected, the UI shows a small "reconnecting…" pill and disables the bid button to avoid confusing failures.</li>
+  </ol>
+  <h3>Scheduler precision</h3>
+  <p>A 1-second tick means an auction can end up to ~1 s after <code>current_end_at</code>; bids in that gap are still rejected by the time check inside the transaction, so fairness is unaffected. If you want exact-second UX, the tick can run at 250 ms – the queries are index-only and cost nothing.</p>
+</section>
+
+<!-- 13 -->
+<section id="api">
+  <h2>13. API surface</h2>
+  <table>
+    <tr><th style="width:280px">Endpoint</th><th>Notes</th></tr>
+    <tr><td><code>POST /auth/login</code> · <code>POST /auth/logout</code> · <code>GET /auth/me</code> · <code>PATCH /auth/me { locale }</code></td><td>Body <code>{ username, password? }</code>. JWT in httpOnly, SameSite=Lax cookie; socket handshake reads the same cookie. Reserved for later: <code>GET /auth/sso/login</code>, <code>GET /auth/sso/callback</code>.</td></tr>
+    <tr><td><code>GET /campaigns/current</code></td><td>Active or next campaign with its auctions (ordered), used by the main page SSR.</td></tr>
+    <tr><td><code>GET /campaigns/:id/results</code></td><td>Winners board.</td></tr>
+    <tr><td><code>GET /auctions?status=live|pending|ended</code></td><td>List for the auctions page.</td></tr>
+    <tr><td><code>GET /auctions/:id</code> · <code>GET /auctions/:id/bids?limit=20</code></td><td>Detail + history (masked).</td></tr>
+    <tr><td><b><code>POST /auctions/:id/bids</code></b></td><td>Body <code>{ amount, idempotencyKey }</code>. 201 snapshot · 409 <code>{ code: BID_TOO_LOW | AUCTION_CLOSED | ALREADY_LEADING, minAllowed, currentPrice, version }</code> · 429 rate-limited.</td></tr>
+    <tr><td><code>GET /me/bids</code></td><td>Leading / outbid / won summary.</td></tr>
+    <tr><td><code>/admin/products</code> (CRUD) · <code>POST /admin/uploads</code></td><td>Admin role guard.</td></tr>
+    <tr><td><code>/admin/campaigns</code> (CRUD) · <code>PUT /admin/campaigns/:id/order</code> · <code>POST /admin/campaigns/:id/start</code></td><td>Order = array of auction ids; start = set first item's <code>start_at = now()</code>.</td></tr>
+    <tr><td><code>POST /admin/auctions/:id/cancel</code> · <code>GET /admin/campaigns/:id/export.csv</code></td><td>Cancel takes the row lock too, so it cannot race a bid.</td></tr>
+    <tr><td><code>GET /health</code> · <code>GET /time</code></td><td>Liveness; plain server time for clients without a socket.</td></tr>
+  </table>
+</section>
+
+<!-- 14 -->
+<section id="scale">
+  <h2>14. Handling 50–100 concurrent users</h2>
+  <table>
+    <tr><th style="width:240px">Concern</th><th>Numbers &amp; measures</th></tr>
+    <tr><td>WebSocket connections</td><td>100–300 sockets (multiple tabs). A single Node process handles tens of thousands. Keep heartbeats at defaults (25 s ping).</td></tr>
+    <tr><td>Bid write throughput</td><td>Worst case in the last 30 s of a hot item: 100 users × 1 bid/s = 100 tx/s on one row. Each tx is ~2–5 ms under lock → max ~50% lock utilisation on one item. Postgres on a small VPS does 1–3k simple tx/s.</td></tr>
+    <tr><td>Fan-out</td><td>Each bid → 1 room broadcast (≤300 sockets) + 1 private emit. 100 bids/s × 300 = 30k small messages/s; fine for Node + uWebSockets.js engine if needed, trivial at the real expected rate (a few bids/s).</td></tr>
+    <tr><td>Rate limiting</td><td>Per user: 3 bids per 2 s (Redis sliding window). Per IP on auth: 10 / min. Protects the lock queue from a stuck client in a loop.</td></tr>
+    <tr><td>Idempotency</td><td>Client generates a UUID per submit; server stores the response in Redis for 60 s; retried/double-clicked requests return the original result instead of a second bid.</td></tr>
+    <tr><td>Read load</td><td>Main page SSR hits <code>GET /campaigns/current</code>; cache 1–2 s in memory. All other state comes over the socket, so refresh storms do not touch Postgres heavily.</td></tr>
+    <tr><td>Connection pool</td><td>Prisma pool 10–20. Bids on different items run in parallel; bids on the same item queue on the row lock, not on the pool, as long as pool ≥ expected concurrent distinct items + headroom.</td></tr>
+    <tr><td>Scaling out later</td><td>Add Socket.IO Redis adapter, run 2+ API replicas, move the scheduler behind a Redis lock. No schema change required.</td></tr>
+    <tr><td>Load test before launch</td><td>k6: 100 VUs hammering <code>POST /bids</code> on one item for 60 s, assert p95 &lt; 150 ms and zero duplicate prices. artillery socket.io: 300 subscribers receiving every event, assert no drops.</td></tr>
+  </table>
+</section>
+
+<!-- 15 -->
+<section id="edge">
+  <h2>15. Edge cases</h2>
+  <table>
+    <tr><th style="width:280px">Case</th><th>Behaviour</th></tr>
+    <tr><td>Two users, same amount, same instant</td><td>Row lock serialises; first commits, second gets <code>BID_TOO_LOW</code> with the new minimum. Unique index as backstop.</td></tr>
+    <tr><td>Bid arrives 50 ms after end</td><td>Transaction compares <code>now()</code> to <code>current_end_at</code> under lock → <code>AUCTION_CLOSED</code>, even if the scheduler has not flipped status yet.</td></tr>
+    <tr><td>Scheduler and bid race at the end</td><td>Postgres re-evaluates the UPDATE's WHERE after the lock; an extension made by the bid prevents the close. See §7.</td></tr>
+    <tr><td>Double-click / retry after timeout</td><td>Idempotency key returns the first response; no duplicate bid.</td></tr>
+    <tr><td>User's clock is wrong</td><td>Irrelevant – countdown uses server offset; validation uses server time.</td></tr>
+    <tr><td>Socket drops during the final seconds</td><td>Bid still goes through REST; on reconnect the snapshot replaces local state. Button disabled while reconnecting to avoid confusion.</td></tr>
+    <tr><td>Leader bids against themselves</td><td>Rejected (<code>ALREADY_LEADING</code>) unless the campaign enables it.</td></tr>
+    <tr><td>Amount not aligned to step</td><td>Server rounds down to the nearest valid step or rejects with <code>BID_INVALID_STEP</code> (pick one; rounding is friendlier).</td></tr>
+    <tr><td>Admin cancels a live item</td><td>Cancel takes the row lock, sets <code>cancelled</code>, broadcasts <code>auction:ended { cancelled: true }</code>; no result row.</td></tr>
+    <tr><td>Admin edits price/time of a live item</td><td>Blocked in the UI and API; only <code>pending</code> items are editable (except cancel / extend-by-admin).</td></tr>
+    <tr><td>No bids by end time</td><td>Result row with <code>winner_id = NULL</code>; excluded from the winners board; shown as "no winner".</td></tr>
+    <tr><td>Process restart mid-auction</td><td>All state is in Postgres; on boot the scheduler tick resumes; clients reconnect and resync. Nothing is lost.</td></tr>
+  </table>
+</section>
+
+<!-- 16 -->
+<section id="deploy">
+  <h2>16. Deployment</h2>
+<pre><code># docker-compose.yml (production, single host)
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports: ["80:80", "443:443"]
+    volumes: [./nginx.conf:/etc/nginx/nginx.conf:ro, ./certs:/etc/nginx/certs:ro, uploads:/var/www/uploads:ro]
+    depends_on: [web, api]
+  web:
+    build: ./apps/web          # next build && next start
+    environment: { NEXT_PUBLIC_API_URL: https://auction.example.com/api, NEXT_PUBLIC_WS_URL: https://auction.example.com }
+  api:
+    build: ./apps/api          # nest build; node dist/main.js
+    environment:
+      DATABASE_URL: postgresql://auction:***@postgres:5432/auction
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      UPLOAD_DIR: /var/www/uploads
+    volumes: [uploads:/var/www/uploads]
+    depends_on: [postgres, redis]
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_DB: auction, POSTGRES_USER: auction, POSTGRES_PASSWORD: ${PG_PASSWORD} }
+    volumes: [pgdata:/var/lib/postgresql/data]
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+volumes: { pgdata: {}, uploads: {} }</code></pre>
+  <p>Nginx routes <code>/api/*</code> and <code>/socket.io/*</code> to the API (with <code>Upgrade</code> headers), everything else to Next.js, and serves <code>/uploads/*</code> directly. Nightly <code>pg_dump</code> to object storage. Set the server's timezone to UTC and store all timestamps as <code>TIMESTAMPTZ</code>.</p>
+
+  <h3>Repository layout (pnpm monorepo)</h3>
+<pre><code>auction/
+├─ apps/
+│  ├─ web/                      # Next.js
+│  │  └─ app/
+│  │     ├─ page.tsx            # main page: live, upcoming, winners board
+│  │     ├─ auctions/[id]/page.tsx
+│  │     ├─ me/page.tsx
+│  │     └─ admin/{products,campaigns}/...
+│  └─ api/                      # NestJS
+│     └─ src/modules/
+│        ├─ auth/  products/  campaigns/  auctions/
+│        ├─ bids/               # BidsService.placeBid (row-lock transaction)
+│        ├─ realtime/           # Socket.IO gateway, rooms, event names
+│        ├─ scheduler/          # 1 s tick: start/end auctions, write results
+│        └─ notifications/      # outbid/won fan-out, phase-2 web push &amp; email
+├─ packages/shared/             # zod schemas, event payload types, money helpers
+├─ prisma/schema.prisma + migrations/
+├─ load/                        # k6 + artillery scripts
+└─ docker-compose.yml</code></pre>
+</section>
+
+<!-- 17 -->
+<section id="plan">
+  <h2>17. Implementation plan (≈ 3 weeks, 2 developers)</h2>
+  <table>
+    <tr><th style="width:120px">Week</th><th>Deliverables</th><th style="width:220px">Exit criteria</th></tr>
+    <tr><td><b>1 – Foundation</b></td><td>Monorepo scaffold, Docker Compose, Prisma schema + migrations, auth (register/login/JWT cookie, admin role), admin CRUD for products (with image upload) and campaigns (ordering, start/end), scheduler tick, public read endpoints, main page &amp; product list (SSR, no realtime yet).</td><td>Admin can create a campaign and see items flip to live/ended on schedule.</td></tr>
+    <tr><td><b>2 – Bidding &amp; realtime</b></td><td><code>placeBid</code> transaction with anti-sniping, unique constraint, rate limit, idempotency; Socket.IO gateway with rooms and events; auction detail page with countdown (server offset), bid form, quick-bid buttons, bid history; winners board; <code>auction_results</code> materialisation. UI built on the <b>Arena Live</b> design tokens (Tailwind theme: palette, type scale, components from the proposal).</td><td>Two browsers bid against each other with correct serialisation; extension visibly works.</td></tr>
+    <tr><td><b>3 – Notifications, hardening, launch</b></td><td>Arena Live live-layer polish (price flash, countdown colour states, +30 s burst, bid ticker, reduced-motion fallbacks); outbid/won events, sound + browser Notification with permission UX, reconnect handling, "My bids", admin live monitor + CSV export, k6/artillery load test at 100 users, fix findings, TLS + backups, dry-run campaign with the team.</td><td>Load test passes (p95 &lt; 150 ms, zero duplicate prices); dry run completed.</td></tr>
+  </table>
+  <h3>Phase 2 (optional)</h3>
+  <ul>
+    <li>Web Push + email for users without an open tab.</li>
+    <li>Proxy bidding (max-bid auto-increment) – fits inside the same locked transaction.</li>
+    <li>Payment / checkout for winners, deposit requirement before bidding.</li>
+    <li>Second API replica with Redis adapter if campaigns grow past ~1,000 concurrent bidders.</li>
+  </ul>
+</section>
+
+<footer>
+  Live Auction Platform – design proposal · generated 2026-10-25 · All timestamps UTC, money as NUMERIC(14,2). UI direction chosen 2026-10-26: Arena Live.
+</footer>
+
+</div>
+</body>
+</html>

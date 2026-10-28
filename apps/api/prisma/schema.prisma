@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CampaignStatus {
+  draft
+  scheduled
+  live
+  finished
+}
+
+enum AuctionStatus {
+  pending
+  live
+  ended
+  cancelled
+}
+
+model User {
+  id           Int   @id @default(autoincrement())
+  username     String   @unique
+  email        String?  @unique
+  displayName  String   @map("display_name")
+  passwordHash String?  @map("password_hash")
+  authProvider String   @default("local") @map("auth_provider")
+  externalId   String?  @map("external_id")
+  locale       String   @default("vi")
+  role         String   @default("user")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  bids     Bid[]
+  leading  Auction[]       @relation("leader")
+  results  AuctionResult[]
+  autoBids AutoBid[]
+
+  @@unique([authProvider, externalId])
+  @@map("users")
+}
+
+model Product {
+  id            Int   @id @default(autoincrement())
+  name          Json
+  description   Json     @default("{}")
+  images        Json     @default("[]")
+  originalPrice Decimal  @map("original_price") @db.Decimal(14, 2)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  auctions Auction[]
+
+  @@map("products")
+}
+
+model Campaign {
+  id        Int         @id @default(autoincrement())
+  name      Json
+  currency  String         @default("VND") @db.Char(3)
+  status    CampaignStatus @default(draft)
+  startAt   DateTime?      @map("start_at") @db.Timestamptz
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  auctions Auction[]
+  results  AuctionResult[]
+
+  @@map("campaigns")
+}
+
+model Auction {
+  id             Int        @id @default(autoincrement())
+  campaignId     Int        @map("campaign_id")
+  productId      Int        @map("product_id")
+  sortOrder      Int           @map("sort_order")
+  status         AuctionStatus @default(pending)
+  startPrice     Decimal       @map("start_price") @db.Decimal(14, 2)
+  stepPrice      Decimal       @map("step_price") @db.Decimal(14, 2)
+  extendWindowS  Int           @default(30) @map("extend_window_s")
+  extendByS      Int           @default(30) @map("extend_by_s")
+  maxExtensions  Int?          @map("max_extensions")
+  extensionCount Int           @default(0) @map("extension_count")
+  startAt        DateTime      @map("start_at") @db.Timestamptz
+  endAt          DateTime      @map("end_at") @db.Timestamptz
+  currentEndAt   DateTime      @map("current_end_at") @db.Timestamptz
+  currentPrice   Decimal?      @map("current_price") @db.Decimal(14, 2)
+  leadingBidId   Int?       @map("leading_bid_id")
+  leadingUserId  Int?       @map("leading_user_id")
+  bidCount       Int           @default(0) @map("bid_count")
+  version        Int           @default(0)
+
+  campaign Campaign       @relation(fields: [campaignId], references: [id])
+  product  Product        @relation(fields: [productId], references: [id])
+  leader   User?          @relation("leader", fields: [leadingUserId], references: [id])
+  bids     Bid[]
+  result   AuctionResult?
+  autoBids AutoBid[]
+
+  @@unique([campaignId, sortOrder])
+  @@index([campaignId])
+  @@map("auctions")
+}
+
+model Bid {
+  id        Int   @id @default(autoincrement())
+  auctionId Int   @map("auction_id")
+  userId    Int   @map("user_id")
+  amount    Decimal  @db.Decimal(14, 2)
+  isAuto    Boolean  @default(false) @map("is_auto")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  auction Auction @relation(fields: [auctionId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([auctionId, amount])
+  @@index([auctionId, amount(sort: Desc)])
+  @@map("bids")
+}
+
+model AuctionResult {
+  auctionId  Int   @id @map("auction_id")
+  campaignId Int   @map("campaign_id")
+  winnerId   Int?  @map("winner_id")
+  startPrice Decimal  @map("start_price") @db.Decimal(14, 2)
+  finalPrice Decimal? @map("final_price") @db.Decimal(14, 2)
+  priceGain  Decimal? @map("price_gain") @db.Decimal(14, 2)
+  endedAt    DateTime @map("ended_at") @db.Timestamptz
+
+  auction  Auction  @relation(fields: [auctionId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  winner   User?    @relation(fields: [winnerId], references: [id])
+
+  @@index([campaignId, priceGain(sort: Desc)])
+  @@map("auction_results")
+}
+
+/// Proxy bid: the system bids on the user's behalf, one step at a time, up to max_price.
+model AutoBid {
+  id        Int      @id @default(autoincrement())
+  auctionId Int      @map("auction_id")
+  userId    Int      @map("user_id")
+  maxPrice  Decimal  @map("max_price") @db.Decimal(14, 2)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  auction Auction @relation(fields: [auctionId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([auctionId, userId])
+  @@index([auctionId, active, maxPrice(sort: Desc)])
+  @@map("auto_bids")
+}
+
+/// Key/value app settings editable by admin (e.g. autoBidEnabled).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("settings")
+}

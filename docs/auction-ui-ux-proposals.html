@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auction UI/UX Proposals</title>
+<meta name="description" content="Three UI/UX design directions for the live campaign auction web app: Arena Live, Chợ Phiên Market and Atelier Gallery, with mockups, interaction spec and recommendation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfaf8;--fg:#1b1c1f;--muted:#5b616d;--card:#fff;--line:#e3e1dc;--accent:#3346c7;--code:#f1efea;--hl:#fff6d6}
+@media (prefers-color-scheme:dark){:root{--bg:#121316;--fg:#e8e8eb;--muted:#a3a8b3;--card:#1b1d22;--line:#30333a;--accent:#9aa5ff;--code:#23262c;--hl:#3a3420}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 "Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 80px}
+header.top{padding:48px 0 24px;border-bottom:1px solid var(--line)}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin:0 0 8px;letter-spacing:-.02em}
+h2{font-size:26px;margin:56px 0 8px;letter-spacing:-.01em;padding-top:8px;border-top:2px solid var(--fg)}
+h3{font-size:18px;margin:32px 0 8px}
+h4{font-size:14px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p,li{max-width:78ch}
+a{color:var(--accent)}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font:13px ui-monospace,"JetBrains Mono",Menlo,monospace}
+.lede{font-size:17px;color:var(--muted);max-width:80ch}
+.meta{font-size:13px;color:var(--muted)}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:24px 0}
+nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px}
+nav.toc li{break-inside:avoid;margin:2px 0}
+@media (max-width:640px){nav.toc ol{columns:1}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{border-left:4px solid var(--accent);background:var(--card);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.tbl{width:100%;overflow-x:auto;margin:12px 0}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.t th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+table.t tr.win td{background:var(--hl)}
+.sw{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+.sw div{width:112px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card);font-size:11px}
+.sw b{display:block;height:46px}
+.sw span{display:block;padding:4px 6px;line-height:1.3}
+.typo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.typo div{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--card)}
+.cap{font-size:12px;color:var(--muted);margin:6px 0 2px}
+.dir-head{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline}
+.tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 10px;color:var(--muted);margin-right:6px}
+.dots{letter-spacing:2px;color:var(--accent);font-weight:800}
+/* mockup frames */
+.frame{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0 18px;box-shadow:0 10px 30px rgba(0,0,0,.08);background:var(--card)}
+.frame .bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--code);font-size:11px;color:var(--muted)}
+.frame .bar i{width:9px;height:9px;border-radius:50%;background:#d0cec8;display:inline-block}
+.frame .bar em{font-style:normal;margin-left:10px;background:var(--card);border-radius:6px;padding:1px 10px;flex:1;max-width:340px}
+.scroll{overflow-x:auto}
+.scroll>.m{min-width:860px}
+.phones{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin:10px 0 18px}
+.phone{width:300px;border:10px solid #0e0e10;border-radius:36px;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.18);flex:none}
+.phone .m{min-height:560px;position:relative}
+.side-note{flex:1;min-width:240px}
+/* ===== shared mock primitives (themed by tokens) ===== */
+.m{background:var(--bgm);color:var(--fgm);font-family:var(--ff);font-size:13px;line-height:1.4;position:relative}
+.m *{box-sizing:border-box}
+.m p{margin:0}
+.m .nav{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--ln)}
+.m .logo{font-weight:800;font-family:var(--fh);font-size:15px;letter-spacing:-.01em}
+.m .sp{flex:1}
+.m .seg{display:inline-flex;border:1px solid var(--ln);border-radius:999px;font-size:11px;overflow:hidden}
+.m .seg span{padding:2px 8px}
+.m .seg .on{background:var(--fgm);color:var(--bgm);font-weight:700}
+.m .av{width:26px;height:26px;border-radius:50%;background:var(--s2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.m .surf{background:var(--s1);border:1px solid var(--ln);border-radius:var(--r)}
+.m .pad{padding:12px}
+.m .ph{border-radius:calc(var(--r) - 2px);aspect-ratio:4/3;display:flex;align-items:flex-end;padding:6px;font-size:10px;color:rgba(255,255,255,.85)}
+.m .p1{background:linear-gradient(135deg,#3a3f58,#9aa3c7)}
+.m .p2{background:linear-gradient(135deg,#7a2e1f,#e0a15a)}
+.m .p3{background:linear-gradient(135deg,#1f4d43,#8cc9b0)}
+.m .p4{background:linear-gradient(135deg,#2b2b2b,#b5a58a)}
+.m .p5{background:linear-gradient(135deg,#5a1f4b,#e48fb8)}
+.m .p6{background:linear-gradient(135deg,#123a6b,#6fb3f2)}
+.m .num{font-family:var(--fn);font-variant-numeric:tabular-nums lining-nums}
+.m .price{color:var(--pr);font-weight:800}
+.m .mut{color:var(--mu)}
+.m .sm{font-size:11px}
+.m .xs{font-size:10px}
+.m .b{font-weight:700}
+.m .row{display:flex;align-items:center;gap:8px}
+.m .between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.m .stack>*+*{margin-top:8px}
+.m .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap}
+.m .pill.live{background:var(--hot);color:#fff}
+.m .pill.lead{background:var(--okb);color:var(--ok)}
+.m .pill.out{background:var(--hotb);color:var(--hot)}
+.m .pill.won{background:var(--goldb);color:var(--gold)}
+.m .pill.soon{background:var(--s2);color:var(--mu)}
+.m .dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.m .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--pri);color:var(--onp);border:0;border-radius:var(--rb);padding:10px 14px;font-weight:800;font-family:var(--ff);font-size:13px;min-height:40px}
+.m .btn.full{width:100%}
+.m .btn.ghost{background:transparent;color:var(--fgm);border:1px solid var(--ln)}
+.m .btn.dis{opacity:.45}
+.m .chip{border:1px solid var(--ln);border-radius:var(--rb);padding:6px 8px;font-size:11px;font-weight:700;text-align:center;flex:1;background:var(--s1)}
+.m .inp{border:1.5px solid var(--ln);border-radius:var(--rb);padding:9px 10px;background:var(--bgm);font-weight:700;font-size:15px}
+.m .inp.err{border-color:var(--hot)}
+.m .ext{display:inline-flex;align-items:center;gap:4px;background:var(--extb);color:var(--ext);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:800}
+.m .toast{display:flex;gap:10px;align-items:center;background:var(--tb);color:var(--tf);border-radius:var(--r);padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.m .toast .btn{padding:6px 10px;min-height:32px;font-size:12px}
+.m .list>div{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--ln)}
+.m .list>div:last-child{border-bottom:0}
+.m .rank{width:22px;font-weight:800;font-family:var(--fn)}
+.m .bar2{height:6px;border-radius:3px;background:var(--s2);overflow:hidden}
+.m .bar2 b{display:block;height:100%;background:var(--pr)}
+.m .g2{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}
+.m .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.m .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.m .side{display:grid;grid-template-columns:1fr 260px;gap:14px}
+.m .banner{padding:7px 12px;font-size:11px;font-weight:700;display:flex;gap:8px;align-items:center}
+.m .tabs{display:flex;gap:16px;border-bottom:1px solid var(--ln);font-size:12px;font-weight:700}
+.m .tabs span{padding:6px 0;color:var(--mu)}
+.m .tabs .on{color:var(--fgm);border-bottom:2px solid var(--pri)}
+.m .botnav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;border-top:1px solid var(--ln);background:var(--s1);padding:8px 0 10px;font-size:10px}
+.m .botnav .on{color:var(--pri);font-weight:800}
+.m .sticky{position:absolute;left:0;right:0;bottom:0;background:var(--s1);border-top:1px solid var(--ln);padding:10px 12px}
+.m .ring{outline:3px solid var(--focus);outline-offset:2px}
+.m .spin{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;display:inline-block}
+.m .flash{animation:flash 1.4s ease-out infinite}
+.m .pulse{animation:pulse 1s ease-in-out infinite}
+.m .pop{animation:pop 2.4s ease-out infinite}
+@keyframes flash{0%{background:var(--flash)}60%,100%{background:transparent}}
+@keyframes pulse{50%{opacity:.55}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}15%{transform:scale(1.12);opacity:1}25%,85%{transform:scale(1);opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.m .flash,.m .pulse,.m .pop{animation:none}}
+/* ===== Direction themes ===== */
+.A{--bgm:#0B0D17;--s1:#151A2E;--s2:#232A47;--ln:#2A3152;--fgm:#F2F4FF;--mu:#8F98BD;--pri:#E11D48;--onp:#fff;--pr:#C6FF3D;--hot:#FF3D5A;--hotb:rgba(255,61,90,.16);--ok:#3DFFA8;--okb:rgba(61,255,168,.13);--gold:#FFC53D;--goldb:rgba(255,197,61,.15);--ext:#3DD9FF;--extb:rgba(61,217,255,.15);--tb:#FF3D5A;--tf:#fff;--flash:rgba(198,255,61,.28);--focus:#3DD9FF;--r:14px;--rb:10px;--ff:"Be Vietnam Pro",system-ui,sans-serif;--fh:"Be Vietnam Pro",system-ui,sans-serif;--fn:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+.A .glow{box-shadow:0 0 0 1px rgba(198,255,61,.25),0 0 28px rgba(198,255,61,.12)}
+.A .btn{box-shadow:0 6px 18px rgba(225,29,72,.35);text-transform:uppercase;letter-spacing:.04em}
+.B{--bgm:#F5F7FA;--s1:#FFFFFF;--s2:#EEF2F7;--ln:#E1E6EE;--fgm:#101828;--mu:#5B6578;--pri:#1D4ED8;--onp:#fff;--pr:#C2410C;--hot:#D92D20;--hotb:#FEE4E2;--ok:#067647;--okb:#DCFAE6;--gold:#93370D;--goldb:#FEF0C7;--ext:#6D28D9;--extb:#EFE5FF;--tb:#101828;--tf:#fff;--flash:#FFEDD5;--focus:#1D4ED8;--r:12px;--rb:8px;--ff:Inter,"Be Vietnam Pro",system-ui,sans-serif;--fh:Inter,"Be Vietnam Pro",system-ui,sans-serif;--fn:Inter,"Be Vietnam Pro",system-ui,sans-serif}
+.B .shadow{box-shadow:0 1px 2px rgba(16,24,40,.06),0 4px 12px rgba(16,24,40,.05)}
+.C{--bgm:#F4EFE6;--s1:#FBF8F2;--s2:#EAE3D5;--ln:#D6CCBA;--fgm:#1C1A17;--mu:#665F53;--pri:#1C1A17;--onp:#F4EFE6;--pr:#7A1F2B;--hot:#9B2226;--hotb:#F2DCD7;--ok:#3F5A3C;--okb:#E0E7D8;--gold:#7D5F2A;--goldb:#EFE3C8;--ext:#7D5F2A;--extb:#EFE3C8;--tb:#1C1A17;--tf:#F4EFE6;--flash:#EFE3C8;--focus:#7A1F2B;--r:2px;--rb:0;--ff:"Be Vietnam Pro",Inter,system-ui,sans-serif;--fh:"Playfair Display",Georgia,"Times New Roman",serif;--fn:"Playfair Display",Georgia,serif}
+.C .serif{font-family:var(--fh)}
+.C .caps{text-transform:uppercase;letter-spacing:.14em;font-size:10px;font-weight:600}
+.C .btn{text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:600}
+.C .pill{border-radius:0;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.C .inp{border-width:0 0 1.5px;background:transparent;padding-left:0;border-color:var(--fgm)}
+.C .chip{background:transparent}
+/* component sheet */
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;padding:14px}
+.sheet .lbl{font:600 10px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:6px}
+.mini-state{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;padding:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+<p class="meta">Design proposal · Live campaign auction web app · v1.0 · 25 Oct 2026</p>
+<h1>Auction UI/UX: three design directions</h1>
+<p class="lede">Three visual and interaction directions for the campaign-based live auction (Vietnamese-first, VND default, 50–100 concurrent bidders, mostly on phones). Each direction comes with a palette, typography, a component set and rendered mockups. Interaction, accessibility, responsive and edge-state rules are shared across all three, and the document ends with a comparison and a recommendation.</p>
+<p><span class="tag">Backend: fixed by system-design doc</span><span class="tag">Stack target: Tailwind + shadcn/ui</span><span class="tag">Static mockups, no JS</span></p>
+</header>
+
+<nav class="toc" aria-label="Table of contents">
+<strong>Contents</strong>
+<ol>
+<li><a href="#brief">Brief &amp; design principles</a></li>
+<li><a href="#dirA">Direction A: Arena Live (dark broadcast)</a></li>
+<li><a href="#dirB">Direction B: Chợ Phiên (clean marketplace)</a></li>
+<li><a href="#dirC">Direction C: Atelier (premium editorial gallery)</a></li>
+<li><a href="#motion">Interaction &amp; micro-interaction spec</a></li>
+<li><a href="#notif">Notification &amp; sound permission UX</a></li>
+<li><a href="#a11y">Accessibility</a></li>
+<li><a href="#responsive">Responsive rules</a></li>
+<li><a href="#i18n">Language &amp; currency</a></li>
+<li><a href="#edge">Empty &amp; edge states</a></li>
+<li><a href="#other">My bids, login &amp; admin (brief)</a></li>
+<li><a href="#compare">Comparison &amp; recommendation</a></li>
+</ol>
+</nav>
+
+<section id="brief">
+<h2>1. Brief &amp; design principles</h2>
+<p>A campaign is a short, scheduled event: products go live one after another in the order the admin set, each with a hard end time that is pushed back when someone bids in the final window. The UI therefore has to work like a <strong>live event</strong> (urgency, shared moments, instant feedback) and like a <strong>store</strong> (trust, legible prices, clear rules) at the same time. Every direction follows the same five principles:</p>
+<div class="cols">
+<div class="box"><strong>1. The price is the hero.</strong> Current price, minimum next bid and time left are always visible together. On a phone they stay above the fold, and the bid control is sticky.</div>
+<div class="box"><strong>2. Never lie about state.</strong> A bid is "Đang gửi…" until the server acknowledges it. "Leading" only appears after the ack. While reconnecting, prices are shown as stale and bidding is disabled.</div>
+<div class="box"><strong>3. One tap to recover.</strong> Outbid, same-price conflicts and below-minimum errors all offer a single button pre-filled with the new minimum.</div>
+<div class="box"><strong>4. Celebrate fairly.</strong> The winners board ranks by <em>price gain</em> (final − start), so a cheap item that drew a bidding war can top the board.</div>
+<div class="box"><strong>5. Vietnamese first.</strong> Copy, number format (<code>1.200.000 ₫</code>) and diacritic-safe fonts are the default. English is a complete second locale.</div>
+</div>
+<p class="meta">Sample data used throughout: campaign <em>“Đấu giá Mùa Thu 2026 – Gây quỹ Trăng Rằm”</em>; step prices of 100.000–500.000 ₫; bidder names masked as first two characters + *** + last character (e.g. <em>Nguyễn</em> → <em>Ng***n</em>).</p>
+</section>
+
+<section id="dirA">
+<h2>2. Direction A: Arena Live</h2>
+<div class="dir-head"><span class="tag">Dark broadcast</span><span class="tag">Sports-score energy</span><span class="tag">Mono numerals</span></div>
+<p><strong>Concept.</strong> The campaign is presented as a live broadcast. A dark stage puts one featured lot under a "spotlight", prices are set in a monospace scoreboard face that ticks like a stadium display, and an acid-lime price colour and hot-red urgency colour do the emotional work. A bottom ticker streams masked bids ("Tr***g vừa trả 24.500.000 ₫") so people feel the room even when they are only watching. Extensions get a cyan "+30 s" burst, the moment the audience notices.</p>
+<p><strong>Target vibe:</strong> electric, competitive, "everyone is watching". <strong>Pick it when</strong> the campaign is the event: company year-end parties, charity galas projected on a big screen, gaming or tech audiences, evening sessions where dark UI is comfortable.</p>
+
+<h3>Palette</h3>
+<div class="sw">
+<div><b style="background:#0B0D17"></b><span>Stage<br>#0B0D17</span></div>
+<div><b style="background:#151A2E"></b><span>Surface<br>#151A2E</span></div>
+<div><b style="background:#2A3152"></b><span>Line<br>#2A3152</span></div>
+<div><b style="background:#F2F4FF"></b><span>Text<br>#F2F4FF</span></div>
+<div><b style="background:#8F98BD"></b><span>Muted<br>#8F98BD</span></div>
+<div><b style="background:#C6FF3D"></b><span>Price lime<br>#C6FF3D</span></div>
+<div><b style="background:#E11D48"></b><span>Bid / CTA<br>#E11D48</span></div>
+<div><b style="background:#FF3D5A"></b><span>Hot / outbid<br>#FF3D5A</span></div>
+<div><b style="background:#3DD9FF"></b><span>Extension<br>#3DD9FF</span></div>
+<div><b style="background:#3DFFA8"></b><span>Leading<br>#3DFFA8</span></div>
+<div><b style="background:#FFC53D"></b><span>Won / gold<br>#FFC53D</span></div>
+</div>
+<h3>Typography</h3>
+<div class="typo">
+<div><div class="cap">Display &amp; UI: Be Vietnam Pro 600/800</div><div style="font:800 24px 'Be Vietnam Pro',system-ui,sans-serif">Đang diễn ra</div><div class="cap">Fallback: system-ui, -apple-system, Segoe UI, Roboto</div></div>
+<div><div class="cap">Numerals: JetBrains Mono 700, tabular</div><div style="font:700 24px 'JetBrains Mono',ui-monospace,Menlo,monospace">24.500.000 ₫ · 00:27</div><div class="cap">Fallback: ui-monospace, Menlo, Consolas</div></div>
+<div><div class="cap">Scale</div><div>Price 40/32/24 · Title 20 · Body 14 · Label 11 uppercase +4% tracking</div></div>
+</div>
+
+<h3>Key components</h3>
+<div class="frame"><div class="m A"><div class="sheet">
+<div><div class="lbl">Auction card</div><div class="surf pad stack"><div class="ph p2">ảnh</div><div class="between"><span class="pill live"><span class="dot pulse"></span>LIVE</span><span class="num b" style="color:var(--hot)">00:27</span></div><div class="b">Tranh sơn mài Phố cổ Hội An</div><div class="between"><span class="num price" style="font-size:18px">14.200.000 ₫</span><span class="mut sm">18 lượt</span></div></div></div>
+<div><div class="lbl">Price panel</div><div class="surf pad glow stack"><div class="mut sm">GIÁ HIỆN TẠI · CURRENT</div><div class="num price flash" style="font-size:30px;border-radius:6px">24.500.000 ₫</div><div class="mut sm">Khởi điểm 18.000.000 ₫ · Bước giá 500.000 ₫</div><div class="sm">Giá gốc <s class="mut">34.990.000 ₫</s></div></div></div>
+<div><div class="lbl">Countdown: normal / &le;60 s / &le;30 s</div><div class="surf pad stack"><div class="num b" style="font-size:22px">04:12</div><div class="num b" style="font-size:22px;color:var(--gold)">00:48</div><div class="num b pulse" style="font-size:26px;color:var(--hot)">00:09</div></div></div>
+<div><div class="lbl">Bid button: default / sending / disabled</div><div class="stack"><div class="btn full">Đặt giá 25.000.000 ₫</div><div class="btn full"><span class="spin"></span> Đang gửi…</div><div class="btn full dis">Đang kết nối lại…</div></div></div>
+<div><div class="lbl">Outbid toast</div><div class="toast"><div style="flex:1"><div class="b">Bạn đã bị vượt giá!</div><div class="sm">Ph***h trả 25.000.000 ₫</div></div><div class="btn" style="background:#0B0D17">Trả 25.500.000 ₫</div></div></div>
+<div><div class="lbl">Winners row + extension badge</div><div class="surf pad stack"><div class="row"><span class="rank" style="color:var(--gold)">01</span><span class="ph p2" style="width:34px;aspect-ratio:1;padding:0"></span><div style="flex:1"><div class="b sm">Tranh sơn mài Hội An</div><div class="mut xs">Ng***n</div></div><span class="num b" style="color:var(--pr)">+9,2 tr</span></div><div><span class="ext pop">+30 GIÂY · EXTENDED</span></div></div></div>
+</div></div></div>
+
+<h3>Main page: desktop</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>daugia.live/</em></div><div class="scroll"><div class="m A">
+<div class="nav"><span class="logo">ĐẤU GIÁ<span style="color:var(--pr)">.LIVE</span></span><span class="pill live"><span class="dot pulse"></span>Mùa Thu 2026 · ĐANG DIỄN RA</span><span class="sp"></span><span class="mut sm">Đấu giá</span><span class="mut sm">Của tôi</span><span class="seg"><span class="on">VI</span><span>EN</span></span><span class="seg"><span class="on">₫</span><span>$</span></span><span class="av">NA</span></div>
+<div style="padding:14px 16px" class="side">
+<div class="stack">
+<div class="surf glow" style="padding:14px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px">
+<div class="ph p1" style="aspect-ratio:16/11">iPhone 15 Pro Max · ảnh 1/5</div>
+<div class="stack"><div class="row"><span class="pill live"><span class="dot pulse"></span>LIVE · LOT 3/8</span><span class="ext pop">+30 GIÂY</span></div>
+<div style="font-size:20px;font-weight:800">iPhone 15 Pro Max 256GB Titan tự nhiên</div>
+<div class="mut sm">GIÁ HIỆN TẠI</div><div class="num price flash" style="font-size:34px;border-radius:6px">24.500.000 ₫</div>
+<div class="between"><span class="mut sm">Kết thúc sau</span><span class="num b pulse" style="font-size:28px;color:var(--hot)">00:27</span></div>
+<div class="row"><span class="chip">+1× 500K</span><span class="chip">+2× 1TR</span><span class="chip">+5× 2,5TR</span></div>
+<div class="btn full">Đặt giá 25.000.000 ₫</div>
+<div class="row sm"><span class="pill lead">● BẠN ĐANG DẪN ĐẦU</span><span class="mut">23 người đang xem</span></div></div>
+</div>
+<div class="between"><span class="b">Đang diễn ra <span class="mut">· Live now</span></span><span class="mut sm">Xem tất cả →</span></div>
+<div class="g3">
+<div class="surf pad stack"><div class="ph p2"></div><div class="b sm">Tranh sơn mài Phố cổ Hội An</div><div class="between"><span class="num price">14.200.000 ₫</span><span class="num b" style="color:var(--gold)">00:52</span></div></div>
+<div class="surf pad stack"><div class="ph p4"></div><div class="b sm">Đồng hồ Seiko Presage SRPD37</div><div class="between"><span class="num price">9.800.000 ₫</span><span class="num b">03:40</span></div></div>
+<div class="surf pad stack"><div class="ph p3"></div><div class="b sm">Gốm Bát Tràng men lam (bộ 6)</div><div class="between"><span class="num price">2.300.000 ₫</span><span class="num b">06:15</span></div></div>
+</div>
+</div>
+<div class="stack">
+<div class="surf pad"><div class="b" style="margin-bottom:6px">Tiếp theo <span class="mut sm">· Up next</span></div><div class="list">
+<div><span class="num b" style="color:var(--ext)">14:30</span><span class="sm" style="flex:1">Máy ảnh Fujifilm X-T5</span><span class="num mut sm">từ 28TR</span></div>
+<div><span class="num b" style="color:var(--ext)">14:45</span><span class="sm" style="flex:1">Áo dài lụa thêu tay</span><span class="num mut sm">từ 3TR</span></div>
+<div><span class="num b" style="color:var(--ext)">15:00</span><span class="sm" style="flex:1">Xe đạp Giant Escape 2</span><span class="num mut sm">từ 7TR</span></div>
+<div><span class="num b" style="color:var(--ext)">15:15</span><span class="sm" style="flex:1">Loa Marshall Stanmore III</span><span class="num mut sm">từ 6TR</span></div></div></div>
+<div class="surf pad"><div class="b" style="margin-bottom:6px">Bảng vàng <span class="mut sm">· Winners</span></div><div class="list">
+<div><span class="rank" style="color:var(--gold)">01</span><span class="sm" style="flex:1">Tranh lụa Thiếu nữ<br><span class="mut xs">Ng***n</span></span><span class="num b" style="color:var(--pr)">+9,2TR</span></div>
+<div><span class="rank">02</span><span class="sm" style="flex:1">Nhẫn bạc chạm khắc<br><span class="mut xs">Tr***g</span></span><span class="num b" style="color:var(--pr)">+4,1TR</span></div>
+<div><span class="rank">03</span><span class="sm" style="flex:1">Trà Shan tuyết cổ thụ<br><span class="mut xs">Lê***a</span></span><span class="num b" style="color:var(--pr)">+2,6TR</span></div></div></div>
+</div>
+</div>
+<div class="banner" style="background:#060810;border-top:1px solid var(--ln);color:var(--mu)"><span class="pill live">LIVE</span><span><b style="color:var(--fgm)">Tr***g</b> vừa trả <span class="num" style="color:var(--pr)">24.500.000 ₫</span> · iPhone 15 Pro Max</span><span>· <b style="color:var(--fgm)">H***y</b> trả <span class="num" style="color:var(--pr)">14.200.000 ₫</span> · Tranh sơn mài</span></div>
+</div></div></div>
+
+<h3>Phone: main page and detail with outbid toast</h3>
+<div class="phones">
+<div class="phone"><div class="m A">
+<div class="nav"><span class="logo">ĐẤU GIÁ<span style="color:var(--pr)">.LIVE</span></span><span class="sp"></span><span class="seg"><span class="on">VI</span><span>EN</span></span></div>
+<div style="padding:12px" class="stack">
+<div class="mut xs">MÙA THU 2026 · LOT 3/8</div>
+<div class="surf pad glow stack"><div class="ph p1" style="aspect-ratio:16/10"></div><div class="between"><span class="pill live"><span class="dot pulse"></span>LIVE</span><span class="num b pulse" style="color:var(--hot);font-size:20px">00:27</span></div><div class="b">iPhone 15 Pro Max 256GB</div><div class="num price" style="font-size:26px">24.500.000 ₫</div><div class="btn full">Đặt giá 25.000.000 ₫</div></div>
+<div class="b sm">Tiếp theo</div>
+<div class="list"><div><span class="num b" style="color:var(--ext)">14:30</span><span class="sm" style="flex:1">Fujifilm X-T5</span><span class="num mut sm">28TR</span></div><div><span class="num b" style="color:var(--ext)">14:45</span><span class="sm" style="flex:1">Áo dài lụa thêu tay</span><span class="num mut sm">3TR</span></div></div>
+<div class="b sm">Bảng vàng</div>
+<div class="list"><div><span class="rank" style="color:var(--gold)">01</span><span class="sm" style="flex:1">Tranh lụa Thiếu nữ</span><span class="num b" style="color:var(--pr)">+9,2TR</span></div></div>
+</div>
+<div class="botnav"><span class="on">Trực tiếp</span><span>Danh sách</span><span>Của tôi</span><span>Tôi</span></div>
+</div></div>
+<div class="phone"><div class="m A">
+<div style="padding:10px"><div class="toast"><div style="flex:1"><div class="b">Bạn đã bị vượt giá!</div><div class="sm">Ph***h · 25.000.000 ₫</div></div><div class="btn" style="background:#0B0D17">Trả 25,5TR</div></div></div>
+<div class="ph p1" style="aspect-ratio:16/11;border-radius:0;margin-top:-4px">1 / 5</div>
+<div style="padding:12px" class="stack">
+<div class="row"><span class="pill out">● BỊ VƯỢT GIÁ</span><span class="ext pop">+30 GIÂY</span></div>
+<div class="b" style="font-size:16px">iPhone 15 Pro Max 256GB</div>
+<div class="between"><span class="num price flash" style="font-size:26px;border-radius:6px">25.000.000 ₫</span><span class="num b pulse" style="color:var(--hot);font-size:20px">00:30</span></div>
+<div class="mut sm">Giá gốc 34.990.000 ₫ · Bước 500.000 ₫</div>
+</div>
+<div class="sticky stack"><div class="row"><span class="chip">+1×</span><span class="chip">+2×</span><span class="chip">+5×</span></div><div class="inp num">25.500.000 ₫</div><div class="btn full">Đặt giá</div></div>
+</div></div>
+<div class="side-note box"><strong>Phone behaviour.</strong> On the detail page the bid bar is pinned to the bottom (with safe-area padding), so the thumb never travels. The outbid toast slides in from the top under the status bar and never covers the bid bar. "Trả 25,5TR" ("Bid 25.5M") fills in and submits the new minimum in one tap, with a 3-second undo chip instead of a confirmation dialog. Short-form amounts ("25,5TR") are used only where space is tight; the full amount stays in the accessible name.</div>
+</div>
+
+<h3>Auction detail: desktop</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>daugia.live/lot/iphone-15-pro-max</em></div><div class="scroll"><div class="m A">
+<div class="nav"><span class="logo">ĐẤU GIÁ<span style="color:var(--pr)">.LIVE</span></span><span class="mut sm">← Mùa Thu 2026 / Lot 3</span><span class="sp"></span><span class="seg"><span class="on">VI</span><span>EN</span></span><span class="av">NA</span></div>
+<div style="padding:14px 16px" class="g2">
+<div class="stack"><div class="ph p1" style="aspect-ratio:16/11">Ảnh 1/5</div><div class="g4"><div class="ph p1" style="outline:2px solid var(--pr)"></div><div class="ph p6"></div><div class="ph p4"></div><div class="ph p3"></div></div>
+<div class="surf pad"><div class="b">Mô tả</div><p class="mut sm" style="margin-top:4px">Máy mới 99%, pin 100%, đầy đủ hộp và phụ kiện. Bảo hành chính hãng đến 03/2027. Người thắng nhận hàng tại văn phòng Hà Nội hoặc giao COD.</p></div></div>
+<div class="stack">
+<div class="row"><span class="pill live"><span class="dot pulse"></span>LIVE</span><span class="mut sm">Lot 3/8 · 41 lượt đặt</span></div>
+<div style="font-size:22px;font-weight:800">iPhone 15 Pro Max 256GB Titan tự nhiên</div>
+<div class="surf glow pad stack"><div class="between"><div><div class="mut xs">GIÁ HIỆN TẠI</div><div class="num price flash" style="font-size:32px;border-radius:6px">24.500.000 ₫</div></div><div style="text-align:right"><div class="mut xs">CÒN LẠI</div><div class="num b pulse" style="font-size:30px;color:var(--hot)">00:27</div></div></div>
+<div class="between sm"><span class="mut">Giá gốc <s>34.990.000 ₫</s> · Khởi điểm 18.000.000 ₫</span><span class="ext pop">+30 GIÂY · gia hạn</span></div></div>
+<div class="row"><span class="chip">+1× · 25.000.000</span><span class="chip">+2× · 25.500.000</span><span class="chip">+5× · 27.000.000</span></div>
+<div class="row"><div class="inp num ring" style="flex:1">25.000.000 ₫</div><div class="btn" style="min-width:150px">Đặt giá</div></div>
+<div class="mut xs">Tối thiểu 25.000.000 ₫ (giá hiện tại + 500.000 ₫). Đặt giá trong 30 giây cuối sẽ gia hạn thêm 30 giây.</div>
+<div class="surf pad"><div class="between"><span class="b">Lịch sử đặt giá</span><span class="pill lead">● BẠN DẪN ĐẦU</span></div><div class="list">
+<div class="flash"><span class="b" style="width:60px">Bạn</span><span class="num price" style="flex:1">24.500.000 ₫</span><span class="mut xs num">14:12:41</span></div>
+<div><span class="b" style="width:60px">Tr***g</span><span class="num" style="flex:1">24.000.000 ₫</span><span class="mut xs num">14:12:33</span></div>
+<div><span class="b" style="width:60px">Ph***h</span><span class="num" style="flex:1">23.500.000 ₫</span><span class="mut xs num">14:12:09</span></div>
+<div><span class="b" style="width:60px">Ng***n</span><span class="num" style="flex:1">22.000.000 ₫</span><span class="mut xs num">14:11:50</span></div></div></div>
+</div></div></div></div></div>
+
+<h3>Winners board</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>daugia.live/winners</em></div><div class="scroll"><div class="m A" style="padding:16px">
+<div class="between"><div><div class="mut xs">MÙA THU 2026 · 5/8 LOT ĐÃ KẾT THÚC</div><div style="font-size:22px;font-weight:800">Bảng vàng <span class="mut" style="font-weight:600;font-size:14px">· xếp theo mức tăng giá</span></div></div><span class="seg"><span class="on">Tăng giá</span><span>% tăng</span></span></div>
+<div class="g3" style="margin:12px 0">
+<div class="surf pad glow" style="border-color:var(--gold)"><div class="row"><span class="num b" style="font-size:28px;color:var(--gold)">01</span><div><div class="b">Tranh lụa Thiếu nữ</div><div class="mut xs">Ng***n · 5.000.000 → 14.200.000 ₫</div></div></div><div class="num price" style="font-size:24px;margin-top:6px">+9.200.000 ₫</div></div>
+<div class="surf pad"><div class="row"><span class="num b" style="font-size:28px">02</span><div><div class="b">Nhẫn bạc chạm khắc</div><div class="mut xs">Tr***g · 1.500.000 → 5.600.000 ₫</div></div></div><div class="num price" style="font-size:24px;margin-top:6px">+4.100.000 ₫</div></div>
+<div class="surf pad"><div class="row"><span class="num b" style="font-size:28px">03</span><div><div class="b">Trà Shan tuyết cổ thụ</div><div class="mut xs">Lê***a · 800.000 → 3.400.000 ₫</div></div></div><div class="num price" style="font-size:24px;margin-top:6px">+2.600.000 ₫</div></div></div>
+<div class="list surf pad">
+<div><span class="rank">04</span><span style="flex:1">Sách cổ "Việt Nam sử lược" 1928 <span class="mut xs">· H***y</span></span><div class="bar2" style="width:160px"><b style="width:22%"></b></div><span class="num b" style="width:110px;text-align:right;color:var(--pr)">+2.050.000 ₫</span></div>
+<div><span class="rank">05</span><span style="flex:1">Bộ ấm tử sa Nghi Hưng <span class="mut xs">· Đ***t</span></span><div class="bar2" style="width:160px"><b style="width:13%"></b></div><span class="num b" style="width:110px;text-align:right;color:var(--pr)">+1.200.000 ₫</span></div>
+</div></div></div></div>
+</section>
+
+<section id="dirB">
+<h2>3. Direction B: Chợ Phiên (clean marketplace)</h2>
+<div class="dir-head"><span class="tag">Light e-commerce</span><span class="tag">Familiar like Shopee / Tiki</span><span class="tag">shadcn-native</span></div>
+<p><strong>Concept.</strong> "Chợ phiên" is the Vietnamese periodic market: a familiar, trustworthy place that comes alive on a schedule. The UI borrows the conventions Vietnamese shoppers already know from large e-commerce apps: white cards on a cool grey canvas, a confident blue for actions, orange for prices, and tabs for <em>Đang diễn ra / Sắp diễn ra / Đã kết thúc</em>. Excitement comes from <em>state</em> rather than decoration: a timer chip that turns amber and then red, an orange flash on price change, and a violet extension badge. Because it stays close to shadcn/ui defaults, it is the cheapest direction to build and the easiest to re-skin for a client brand.</p>
+<p><strong>Target vibe:</strong> trustworthy, fast, legible in daylight on a phone. <strong>Pick it when</strong> the audience is broad (staff, customers, older bidders), people bid from phones during the working day, or the product must carry a client's brand colour later.</p>
+
+<h3>Palette</h3>
+<div class="sw">
+<div><b style="background:#F5F7FA"></b><span>Canvas<br>#F5F7FA</span></div>
+<div><b style="background:#FFFFFF"></b><span>Card<br>#FFFFFF</span></div>
+<div><b style="background:#E1E6EE"></b><span>Border<br>#E1E6EE</span></div>
+<div><b style="background:#101828"></b><span>Text<br>#101828</span></div>
+<div><b style="background:#5B6578"></b><span>Muted<br>#5B6578</span></div>
+<div><b style="background:#1D4ED8"></b><span>Primary<br>#1D4ED8</span></div>
+<div><b style="background:#C2410C"></b><span>Price<br>#C2410C</span></div>
+<div><b style="background:#D92D20"></b><span>Danger / &le;30 s<br>#D92D20</span></div>
+<div><b style="background:#B54708"></b><span>Warning &le;60 s<br>#B54708</span></div>
+<div><b style="background:#067647"></b><span>Leading<br>#067647</span></div>
+<div><b style="background:#6D28D9"></b><span>Extension<br>#6D28D9</span></div>
+</div>
+<h3>Typography</h3>
+<div class="typo">
+<div><div class="cap">UI: Inter 400/600/800 (Vietnamese subset)</div><div style="font:800 22px Inter,'Be Vietnam Pro',system-ui,sans-serif">Sắp diễn ra lúc 14:30</div><div class="cap">Fallback: Be Vietnam Pro, system-ui, Roboto, Arial</div></div>
+<div><div class="cap">Numerals: Inter 800 with <code>tabular-nums</code></div><div style="font:800 22px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#C2410C">24.500.000 ₫</div><div class="cap">One family keeps the bundle small</div></div>
+<div><div class="cap">Scale</div><div>Price 32/24/18 · H1 24 · Card title 14/600 · Body 14 · Caption 12</div></div>
+</div>
+
+<h3>Key components</h3>
+<div class="frame"><div class="m B"><div class="sheet">
+<div><div class="lbl">Auction card</div><div class="surf shadow" style="overflow:hidden"><div class="ph p2" style="border-radius:0;justify-content:space-between"><span class="pill live">● Đang diễn ra</span></div><div class="pad stack"><div class="b">Tranh sơn mài Phố cổ Hội An</div><div class="num price" style="font-size:18px">14.200.000 ₫</div><div class="between sm"><span class="mut">18 lượt đặt</span><span class="pill out num">00:27</span></div></div></div></div>
+<div><div class="lbl">Price panel</div><div class="surf pad stack" style="background:#FFF7ED;border-color:#FED7AA"><div class="mut sm">Giá hiện tại</div><div class="num price flash" style="font-size:28px;border-radius:6px">24.500.000 ₫</div><div class="sm">Giá gốc <s class="mut">34.990.000 ₫</s> <span class="pill lead">-30%</span></div><div class="mut sm">Bước giá 500.000 ₫ · 41 lượt</div></div></div>
+<div><div class="lbl">Countdown chip states</div><div class="stack"><span class="pill soon num" style="font-size:13px">04:12</span><br><span class="pill num" style="font-size:13px;background:#FEF0C7;color:#B54708">00:48</span><br><span class="pill out num pulse" style="font-size:13px">00:09</span><br><span class="pill soon">Bắt đầu 14:30</span></div></div>
+<div><div class="lbl">Bid button: default / sending / disabled</div><div class="stack"><div class="btn full">Đặt giá 25.000.000 ₫</div><div class="btn full"><span class="spin"></span> Đang gửi…</div><div class="btn full dis">Mất kết nối – đang thử lại</div></div></div>
+<div><div class="lbl">Outbid toast (sonner)</div><div class="toast"><span class="pill out">!</span><div style="flex:1"><div class="b">Bạn đã bị vượt giá</div><div class="sm" style="opacity:.8">iPhone 15 Pro Max · 25.000.000 ₫</div></div><div class="btn">Đặt lại</div></div></div>
+<div><div class="lbl">Winners row + extension badge</div><div class="surf pad stack"><div class="row"><span class="pill won">#1</span><div style="flex:1"><div class="b sm">Tranh lụa Thiếu nữ</div><div class="mut xs">Ng***n · 14.200.000 ₫</div></div><span class="pill lead">+9,2 tr (+184%)</span></div><span class="ext pop">⟳ Gia hạn +30 giây</span></div></div>
+</div></div></div>
+
+<h3>Main page: desktop</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>choplien.vn/</em></div><div class="scroll"><div class="m B">
+<div class="nav" style="background:#fff"><span class="logo" style="color:var(--pri)">Chợ Phiên</span><div class="inp sm mut" style="flex:1;max-width:320px;font-weight:400;padding:6px 10px;font-size:12px">Tìm sản phẩm đấu giá…</div><span class="sp"></span><span class="seg"><span class="on">VI</span><span>EN</span></span><span class="seg"><span class="on">VND</span><span>USD</span></span><span class="sm b">Đấu giá của tôi</span><span class="av">NA</span></div>
+<div style="padding:14px 16px" class="stack">
+<div class="surf shadow" style="padding:14px 16px;background:linear-gradient(90deg,#1D4ED8,#3B82F6);color:#fff;border:0"><div class="between"><div><div class="xs" style="opacity:.85">CHIẾN DỊCH ĐANG DIỄN RA</div><div style="font-size:20px;font-weight:800">Đấu giá Mùa Thu 2026 – Gây quỹ Trăng Rằm</div><div class="sm" style="opacity:.9">8 sản phẩm · 13:30 – 16:00 hôm nay · 87 người tham gia</div></div><div style="text-align:right"><div class="xs" style="opacity:.85">ĐÃ GÂY QUỸ</div><div class="num" style="font-size:22px;font-weight:800">68.400.000 ₫</div></div></div></div>
+<div class="side">
+<div class="stack">
+<div class="tabs"><span class="on">Đang diễn ra (3)</span><span>Sắp diễn ra (4)</span><span>Đã kết thúc (5)</span></div>
+<div class="g3">
+<div class="surf shadow" style="overflow:hidden"><div class="ph p1" style="border-radius:0"><span class="pill live">● LIVE</span></div><div class="pad stack"><div class="b sm">iPhone 15 Pro Max 256GB</div><div class="num price flash" style="font-size:17px;border-radius:4px">24.500.000 ₫</div><div class="between"><span class="pill lead">Đang dẫn đầu</span><span class="pill out num pulse">00:27</span></div><div class="btn full">Đặt giá</div></div></div>
+<div class="surf shadow" style="overflow:hidden"><div class="ph p2" style="border-radius:0"><span class="pill live">● LIVE</span></div><div class="pad stack"><div class="b sm">Tranh sơn mài Phố cổ Hội An</div><div class="num price" style="font-size:17px">14.200.000 ₫</div><div class="between"><span class="mut xs">18 lượt</span><span class="pill num" style="background:#FEF0C7;color:#B54708">00:52</span></div><div class="btn full">Đặt giá</div></div></div>
+<div class="surf shadow" style="overflow:hidden"><div class="ph p4" style="border-radius:0"><span class="pill live">● LIVE</span></div><div class="pad stack"><div class="b sm">Đồng hồ Seiko Presage</div><div class="num price" style="font-size:17px">9.800.000 ₫</div><div class="between"><span class="pill out">Bị vượt giá</span><span class="pill soon num">03:40</span></div><div class="btn full">Đặt lại 10.000.000 ₫</div></div></div>
+</div>
+<div class="b">Sắp diễn ra <span class="mut sm">· theo thứ tự chiến dịch</span></div>
+<div class="g4">
+<div class="surf pad stack"><div class="ph p6"></div><div class="b xs">Fujifilm X-T5</div><div class="between xs"><span class="mut">Từ 28.000.000 ₫</span><span class="pill soon">14:30</span></div></div>
+<div class="surf pad stack"><div class="ph p5"></div><div class="b xs">Áo dài lụa thêu tay</div><div class="between xs"><span class="mut">Từ 3.000.000 ₫</span><span class="pill soon">14:45</span></div></div>
+<div class="surf pad stack"><div class="ph p3"></div><div class="b xs">Xe đạp Giant Escape 2</div><div class="between xs"><span class="mut">Từ 7.000.000 ₫</span><span class="pill soon">15:00</span></div></div>
+<div class="surf pad stack"><div class="ph p4"></div><div class="b xs">Loa Marshall Stanmore III</div><div class="between xs"><span class="mut">Từ 6.000.000 ₫</span><span class="pill soon">15:15</span></div></div>
+</div></div>
+<div class="surf shadow pad"><div class="between"><span class="b">Bảng xếp hạng</span><span class="mut xs">Mức tăng giá</span></div><div class="list" style="margin-top:6px">
+<div><span class="pill won">1</span><span class="sm" style="flex:1">Tranh lụa Thiếu nữ<br><span class="mut xs">Ng***n · 14.200.000 ₫</span></span><span class="num b sm" style="color:var(--ok)">+9,2 tr</span></div>
+<div><span class="pill soon">2</span><span class="sm" style="flex:1">Nhẫn bạc chạm khắc<br><span class="mut xs">Tr***g · 5.600.000 ₫</span></span><span class="num b sm" style="color:var(--ok)">+4,1 tr</span></div>
+<div><span class="pill soon">3</span><span class="sm" style="flex:1">Trà Shan tuyết cổ thụ<br><span class="mut xs">Lê***a · 3.400.000 ₫</span></span><span class="num b sm" style="color:var(--ok)">+2,6 tr</span></div>
+<div><span class="pill soon">4</span><span class="sm" style="flex:1">Sách cổ 1928<br><span class="mut xs">H***y · 2.850.000 ₫</span></span><span class="num b sm" style="color:var(--ok)">+2,05 tr</span></div></div><div class="btn ghost full" style="margin-top:8px">Xem toàn bộ</div></div>
+</div></div></div></div></div>
+
+<h3>Phone: main page, detail and My bids</h3>
+<div class="phones">
+<div class="phone"><div class="m B">
+<div class="nav" style="background:#fff"><span class="logo" style="color:var(--pri)">Chợ Phiên</span><span class="sp"></span><span class="seg"><span class="on">VI</span><span>EN</span></span></div>
+<div style="padding:10px 12px" class="stack">
+<div class="surf pad" style="background:#1D4ED8;color:#fff;border:0"><div class="xs" style="opacity:.85">ĐANG DIỄN RA · 13:30–16:00</div><div class="b">Đấu giá Mùa Thu 2026</div></div>
+<div class="tabs"><span class="on">Live (3)</span><span>Sắp tới (4)</span><span>Kết thúc</span></div>
+<div class="surf shadow pad row"><div class="ph p1" style="width:76px;flex:none"></div><div style="flex:1" class="stack"><div class="b sm">iPhone 15 Pro Max 256GB</div><div class="num price">24.500.000 ₫</div><div class="between"><span class="pill lead">Dẫn đầu</span><span class="pill out num pulse">00:27</span></div></div></div>
+<div class="surf shadow pad row"><div class="ph p2" style="width:76px;flex:none"></div><div style="flex:1" class="stack"><div class="b sm">Tranh sơn mài Hội An</div><div class="num price">14.200.000 ₫</div><div class="between"><span class="mut xs">18 lượt</span><span class="pill num" style="background:#FEF0C7;color:#B54708">00:52</span></div></div></div>
+<div class="surf shadow pad row"><div class="ph p4" style="width:76px;flex:none"></div><div style="flex:1" class="stack"><div class="b sm">Đồng hồ Seiko Presage</div><div class="num price">9.800.000 ₫</div><div class="between"><span class="pill out">Bị vượt</span><span class="pill soon num">03:40</span></div></div></div>
+</div>
+<div class="botnav"><span class="on">Trang chủ</span><span>Đấu giá</span><span>Của tôi</span><span>Xếp hạng</span></div>
+</div></div>
+<div class="phone"><div class="m B">
+<div class="nav" style="background:#fff"><span class="sm">←</span><span class="b sm">Chi tiết đấu giá</span><span class="sp"></span><span class="pill live">● LIVE</span></div>
+<div class="ph p1" style="aspect-ratio:1/0.8;border-radius:0;justify-content:center">• ○ ○ ○ ○</div>
+<div style="padding:10px 12px" class="stack">
+<div class="b" style="font-size:15px">iPhone 15 Pro Max 256GB Titan tự nhiên</div>
+<div class="surf pad" style="background:#FFF7ED;border-color:#FED7AA"><div class="between"><div><div class="mut xs">Giá hiện tại</div><div class="num price flash" style="font-size:24px;border-radius:4px">24.500.000 ₫</div></div><div style="text-align:right"><span class="pill out num pulse" style="font-size:14px">00:27</span><div class="ext pop" style="margin-top:4px">+30 giây</div></div></div><div class="mut xs">Giá gốc <s>34.990.000 ₫</s> · Bước 500.000 ₫</div></div>
+<div class="row"><span class="pill lead">✓ Bạn đang dẫn đầu</span></div>
+</div>
+<div class="sticky stack"><div class="row"><span class="chip">+500K</span><span class="chip">+1TR</span><span class="chip">+2,5TR</span></div><div class="row"><div class="inp num" style="flex:1;font-size:14px">25.000.000</div><div class="btn">Đặt giá</div></div></div>
+</div></div>
+<div class="phone"><div class="m B">
+<div class="nav" style="background:#fff"><span class="b">Đấu giá của tôi</span><span class="sp"></span><span class="mut xs">My bids</span></div>
+<div style="padding:10px 12px" class="stack">
+<div class="tabs"><span class="on">Tất cả (4)</span><span>Dẫn đầu</span><span>Bị vượt</span><span>Đã thắng</span></div>
+<div class="surf pad row"><div class="ph p1" style="width:56px;flex:none"></div><div style="flex:1"><div class="b sm">iPhone 15 Pro Max</div><div class="xs mut">Giá của bạn 24.500.000 ₫</div></div><span class="pill lead">Dẫn đầu</span></div>
+<div class="surf pad row" style="border-color:#FDA29B"><div class="ph p4" style="width:56px;flex:none"></div><div style="flex:1"><div class="b sm">Seiko Presage</div><div class="xs mut">Bạn 9.300.000 · Hiện 9.800.000 ₫</div><div class="btn" style="min-height:28px;padding:4px 8px;font-size:11px;margin-top:4px">Đặt lại 10.000.000 ₫</div></div><span class="pill out">Bị vượt</span></div>
+<div class="surf pad row"><div class="ph p2" style="width:56px;flex:none"></div><div style="flex:1"><div class="b sm">Tranh lụa Thiếu nữ</div><div class="xs mut">Thắng 14.200.000 ₫ · Liên hệ nhận hàng</div></div><span class="pill won">Đã thắng</span></div>
+<div class="surf pad row" style="opacity:.7"><div class="ph p3" style="width:56px;flex:none"></div><div style="flex:1"><div class="b sm">Gốm Bát Tràng</div><div class="xs mut">Kết thúc · 2.900.000 ₫</div></div><span class="pill soon">Không thắng</span></div>
+</div>
+<div class="botnav"><span>Trang chủ</span><span>Đấu giá</span><span class="on">Của tôi</span><span>Xếp hạng</span></div>
+</div></div>
+</div>
+
+<h3>Auction detail: desktop</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>choplien.vn/dau-gia/iphone-15-pro-max</em></div><div class="scroll"><div class="m B">
+<div class="nav" style="background:#fff"><span class="logo" style="color:var(--pri)">Chợ Phiên</span><span class="mut sm">Trang chủ / Mùa Thu 2026 / iPhone 15 Pro Max</span><span class="sp"></span><span class="seg"><span class="on">VI</span><span>EN</span></span><span class="av">NA</span></div>
+<div style="padding:14px 16px" class="g2">
+<div class="stack"><div class="surf pad"><div class="ph p1" style="aspect-ratio:16/11">1/5</div><div class="g4" style="margin-top:8px"><div class="ph p1" style="outline:2px solid var(--pri)"></div><div class="ph p6"></div><div class="ph p4"></div><div class="ph p3"></div></div></div>
+<div class="surf pad"><div class="tabs"><span class="on">Mô tả</span><span>Lịch sử đặt giá (41)</span><span>Quy định</span></div><p class="sm" style="margin-top:8px">Máy mới 99%, pin 100%, đầy đủ hộp và phụ kiện. Bảo hành chính hãng đến 03/2027.</p></div></div>
+<div class="stack">
+<div class="row"><span class="pill live">● Đang diễn ra</span><span class="mut sm">Lot 3/8 · 23 người đang xem</span></div>
+<div style="font-size:20px;font-weight:800">iPhone 15 Pro Max 256GB Titan tự nhiên</div>
+<div class="surf pad stack" style="background:#FFF7ED;border-color:#FED7AA"><div class="between"><div><div class="mut sm">Giá hiện tại</div><div class="num price flash" style="font-size:30px;border-radius:6px">24.500.000 ₫</div></div><div style="text-align:right"><div class="mut sm">Kết thúc sau</div><span class="pill out num pulse" style="font-size:18px;padding:4px 10px">00:27</span></div></div>
+<div class="between sm"><span>Giá gốc <s class="mut">34.990.000 ₫</s> · Khởi điểm 18.000.000 ₫</span><span class="ext pop">⟳ Đã gia hạn +30 giây</span></div></div>
+<div class="surf pad stack shadow"><div class="b sm">Giá của bạn</div><div class="row"><span class="chip">+1 bước<br><span class="num">25.000.000</span></span><span class="chip">+2 bước<br><span class="num">25.500.000</span></span><span class="chip">+5 bước<br><span class="num">27.000.000</span></span></div>
+<div class="row"><div class="inp num ring" style="flex:1">25.000.000 ₫</div><div class="btn" style="min-width:140px">Đặt giá</div></div>
+<div class="mut xs">Tối thiểu 25.000.000 ₫. Đặt giá trong 30 giây cuối sẽ gia hạn thêm 30 giây.</div>
+<div class="row"><span class="pill lead">✓ Bạn đang dẫn đầu với 24.500.000 ₫</span></div></div>
+<div class="surf pad"><div class="b sm">Lượt đặt gần nhất</div><div class="list sm">
+<div class="flash"><span class="b" style="width:64px">Bạn</span><span class="num price" style="flex:1">24.500.000 ₫</span><span class="mut xs">vừa xong</span></div>
+<div><span class="b" style="width:64px">Tr***g</span><span class="num" style="flex:1">24.000.000 ₫</span><span class="mut xs">8 giây trước</span></div>
+<div><span class="b" style="width:64px">Ph***h</span><span class="num" style="flex:1">23.500.000 ₫</span><span class="mut xs">32 giây trước</span></div></div></div>
+</div></div></div></div></div>
+
+<h3>Winners board</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>choplien.vn/xep-hang</em></div><div class="scroll"><div class="m B" style="padding:16px">
+<div class="between"><div><div style="font-size:20px;font-weight:800">Bảng xếp hạng người thắng</div><div class="mut sm">Mùa Thu 2026 · xếp theo mức tăng giá (giá chốt − giá khởi điểm)</div></div><span class="seg"><span class="on">Mức tăng</span><span>% tăng</span><span>Giá chốt</span></span></div>
+<div class="surf shadow" style="margin-top:12px;overflow:hidden">
+<div class="row xs mut b" style="padding:8px 12px;background:var(--s2)"><span style="width:30px">#</span><span style="flex:1">Sản phẩm</span><span style="width:90px">Người thắng</span><span style="width:110px;text-align:right">Khởi điểm</span><span style="width:110px;text-align:right">Giá chốt</span><span style="width:130px;text-align:right">Mức tăng</span></div>
+<div class="list" style="padding:0 12px">
+<div style="background:#FFFCF0;margin:0 -12px;padding:8px 12px"><span style="width:30px"><span class="pill won">1</span></span><span class="row" style="flex:1"><span class="ph p2" style="width:32px;aspect-ratio:1;padding:0"></span><span class="b sm">Tranh lụa Thiếu nữ</span></span><span style="width:90px" class="sm">Ng***n</span><span class="num sm mut" style="width:110px;text-align:right">5.000.000 ₫</span><span class="num sm b" style="width:110px;text-align:right">14.200.000 ₫</span><span style="width:130px;text-align:right"><span class="pill lead num">+9.200.000 ₫ · 184%</span></span></div>
+<div><span style="width:30px"><span class="pill soon">2</span></span><span class="row" style="flex:1"><span class="ph p5" style="width:32px;aspect-ratio:1;padding:0"></span><span class="b sm">Nhẫn bạc chạm khắc</span></span><span style="width:90px" class="sm">Tr***g</span><span class="num sm mut" style="width:110px;text-align:right">1.500.000 ₫</span><span class="num sm b" style="width:110px;text-align:right">5.600.000 ₫</span><span style="width:130px;text-align:right"><span class="pill lead num">+4.100.000 ₫ · 273%</span></span></div>
+<div><span style="width:30px"><span class="pill soon">3</span></span><span class="row" style="flex:1"><span class="ph p3" style="width:32px;aspect-ratio:1;padding:0"></span><span class="b sm">Trà Shan tuyết cổ thụ</span></span><span style="width:90px" class="sm">Lê***a</span><span class="num sm mut" style="width:110px;text-align:right">800.000 ₫</span><span class="num sm b" style="width:110px;text-align:right">3.400.000 ₫</span><span style="width:130px;text-align:right"><span class="pill lead num">+2.600.000 ₫ · 325%</span></span></div>
+<div><span style="width:30px"><span class="pill soon">4</span></span><span class="row" style="flex:1"><span class="ph p4" style="width:32px;aspect-ratio:1;padding:0"></span><span class="b sm">Sách cổ "Việt Nam sử lược" 1928</span></span><span style="width:90px" class="sm">H***y</span><span class="num sm mut" style="width:110px;text-align:right">800.000 ₫</span><span class="num sm b" style="width:110px;text-align:right">2.850.000 ₫</span><span style="width:130px;text-align:right"><span class="pill lead num">+2.050.000 ₫ · 256%</span></span></div>
+</div></div>
+<p class="mut xs" style="margin-top:8px">Tie-break: equal gain → earlier close time ranks higher. Items with no bids are not listed.</p>
+</div></div></div>
+</section>
+
+<section id="dirC">
+<h2>4. Direction C: Atelier (premium editorial gallery)</h2>
+<div class="dir-head"><span class="tag">Editorial / auction house</span><span class="tag">Serif + hairlines</span><span class="tag">Calm urgency</span></div>
+<p><strong>Concept.</strong> Modelled on a printed auction-house catalogue. Every product is a numbered <em>Lot</em> with generous imagery, a serif headline and a short provenance-style description on warm ivory paper. Urgency is conveyed with restraint: the countdown is set in small caps and only turns oxblood in the final 30 seconds, and the extension is announced as a quiet gold rule that reads "Gia hạn · +30 giây". The winners board becomes a "Sổ vàng" (golden ledger) with hairline rules and old-style figures.</p>
+<p><strong>Target vibe:</strong> prestige, trust, collectibility. <strong>Pick it when</strong> lots are art, craft, antiques or luxury goods, the audience is older or VIP, and the brand matters more than raw bidding speed (gala dinners, art-for-charity, heritage brands).</p>
+
+<h3>Palette</h3>
+<div class="sw">
+<div><b style="background:#F4EFE6"></b><span>Ivory paper<br>#F4EFE6</span></div>
+<div><b style="background:#FBF8F2"></b><span>Card<br>#FBF8F2</span></div>
+<div><b style="background:#D6CCBA"></b><span>Hairline<br>#D6CCBA</span></div>
+<div><b style="background:#1C1A17"></b><span>Ink / CTA<br>#1C1A17</span></div>
+<div><b style="background:#665F53"></b><span>Muted<br>#665F53</span></div>
+<div><b style="background:#7A1F2B"></b><span>Oxblood price<br>#7A1F2B</span></div>
+<div><b style="background:#9B2226"></b><span>Urgent<br>#9B2226</span></div>
+<div><b style="background:#B08D57"></b><span>Gold (decor)<br>#B08D57</span></div>
+<div><b style="background:#7D5F2A"></b><span>Gold text<br>#7D5F2A</span></div>
+<div><b style="background:#3F5A3C"></b><span>Leading sage<br>#3F5A3C</span></div>
+</div>
+<h3>Typography</h3>
+<div class="typo">
+<div><div class="cap">Headlines &amp; prices: Playfair Display 600/700</div><div style="font:700 24px 'Playfair Display',Georgia,serif">Lot 03 · Sơn mài Hội An</div><div class="cap">Fallback: Georgia, "Times New Roman", serif</div></div>
+<div><div class="cap">Body &amp; UI: Be Vietnam Pro 400/600</div><div style="font:400 15px 'Be Vietnam Pro',system-ui,sans-serif">Tác phẩm của hoạ sĩ Lê Minh, 2019, 60 × 90 cm.</div><div class="cap">Labels: 10–11px uppercase, +14% tracking</div></div>
+<div><div class="cap">Numerals</div><div>Prices use Playfair <code>lining-nums tabular-nums</code>, so live prices never jitter while the serif character is kept.</div></div>
+</div>
+
+<h3>Key components</h3>
+<div class="frame"><div class="m C"><div class="sheet">
+<div><div class="lbl">Auction card (lot)</div><div class="stack" style="border-top:1px solid var(--fgm);padding-top:8px"><div class="ph p2"></div><div class="caps mut">Lot 03 · Đang diễn ra</div><div class="serif" style="font-size:17px;font-weight:700">Tranh sơn mài Phố cổ Hội An</div><div class="between"><span class="num price" style="font-size:17px">14.200.000 ₫</span><span class="caps" style="color:var(--hot)">00:27</span></div></div></div>
+<div><div class="lbl">Price panel</div><div class="surf pad stack"><div class="caps mut">Giá hiện tại</div><div class="num price flash serif" style="font-size:30px">24.500.000 ₫</div><div style="border-top:1px solid var(--ln);padding-top:6px" class="sm mut">Ước tính 30–36 triệu · Khởi điểm 18.000.000 ₫</div></div></div>
+<div><div class="lbl">Countdown</div><div class="stack"><div class="caps">Kết thúc sau &nbsp;<span class="num serif" style="font-size:20px;letter-spacing:0">04 : 12</span></div><div class="caps" style="color:var(--hot)">Kết thúc sau &nbsp;<span class="num serif pulse" style="font-size:20px;letter-spacing:0">00 : 09</span></div></div></div>
+<div><div class="lbl">Bid button: default / sending / disabled</div><div class="stack"><div class="btn full">Đặt giá · 25.000.000 ₫</div><div class="btn full"><span class="spin"></span> Đang gửi</div><div class="btn full dis">Đang kết nối lại</div></div></div>
+<div><div class="lbl">Outbid toast</div><div class="toast" style="border-left:3px solid #B08D57"><div style="flex:1"><div class="serif b" style="font-size:15px">Có giá cao hơn</div><div class="sm" style="opacity:.8">Lot 03 · 25.000.000 ₫</div></div><div class="btn" style="background:#F4EFE6;color:#1C1A17">Trả giá lại</div></div></div>
+<div><div class="lbl">Ledger row + extension rule</div><div class="stack"><div class="row" style="border-bottom:1px solid var(--ln);padding-bottom:6px"><span class="serif b" style="font-size:20px;width:28px">I</span><div style="flex:1"><div class="serif b">Tranh lụa Thiếu nữ</div><div class="xs mut">Ng***n</div></div><span class="num serif b" style="color:var(--pr)">+9.200.000 ₫</span></div><div class="row pop" style="color:var(--gold)"><span style="flex:1;border-top:1px solid #B08D57"></span><span class="caps">Gia hạn · +30 giây</span><span style="flex:1;border-top:1px solid #B08D57"></span></div></div></div>
+</div></div></div>
+
+<h3>Main page: desktop</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>atelier-daugia.vn/</em></div><div class="scroll"><div class="m C">
+<div class="nav" style="border-bottom:1px solid var(--fgm)"><span class="caps">Phiên số 07 · 25.10.2026</span><span class="sp"></span><span class="logo" style="font-size:22px">Atelier Đấu Giá</span><span class="sp"></span><span class="caps">Danh mục</span><span class="caps">Của tôi</span><span class="seg"><span class="on">VI</span><span>EN</span></span></div>
+<div style="padding:18px 20px;display:grid;grid-template-columns:1.25fr 1fr 230px;gap:20px">
+<div class="ph p2" style="aspect-ratio:4/5">Lot 03</div>
+<div class="stack" style="padding-top:6px"><div class="caps" style="color:var(--hot)">● Đang đấu giá · Lot 03 / 08</div><div class="serif" style="font-size:30px;font-weight:700;line-height:1.1">Tranh sơn mài Phố cổ Hội An</div><p class="mut">Lê Minh (b. 1975). Sơn mài trên gỗ, 60 × 90 cm, 2019. Có chữ ký và chứng nhận của hoạ sĩ.</p>
+<div style="border-top:1px solid var(--ln);padding-top:10px" class="caps mut">Giá hiện tại</div><div class="num price serif flash" style="font-size:34px">14.200.000 ₫</div>
+<div class="between" style="border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);padding:8px 0"><span class="caps">Kết thúc sau</span><span class="num serif b" style="font-size:22px;color:var(--hot)">00 : 27</span></div>
+<div class="btn full">Đặt giá · 14.700.000 ₫</div><div class="row pop" style="color:var(--gold)"><span style="flex:1;border-top:1px solid #B08D57"></span><span class="caps">Gia hạn · +30 giây</span><span style="flex:1;border-top:1px solid #B08D57"></span></div></div>
+<div class="stack"><div class="caps" style="border-bottom:1px solid var(--fgm);padding-bottom:4px">Tiếp theo</div>
+<div class="list"><div><span class="serif b">04</span><span class="sm" style="flex:1">Fujifilm X-T5<br><span class="xs mut">14:30 · từ 28.000.000 ₫</span></span></div><div><span class="serif b">05</span><span class="sm" style="flex:1">Áo dài lụa thêu tay<br><span class="xs mut">14:45 · từ 3.000.000 ₫</span></span></div><div><span class="serif b">06</span><span class="sm" style="flex:1">Gốm Chu Đậu cổ<br><span class="xs mut">15:00 · từ 7.000.000 ₫</span></span></div></div>
+<div class="caps" style="border-bottom:1px solid var(--fgm);padding-bottom:4px;margin-top:14px">Sổ vàng</div>
+<div class="list"><div><span class="serif b" style="width:18px">I</span><span class="sm" style="flex:1">Tranh lụa Thiếu nữ</span><span class="num serif b sm" style="color:var(--pr)">+9,2tr</span></div><div><span class="serif b" style="width:18px">II</span><span class="sm" style="flex:1">Nhẫn bạc chạm</span><span class="num serif b sm" style="color:var(--pr)">+4,1tr</span></div><div><span class="serif b" style="width:18px">III</span><span class="sm" style="flex:1">Trà Shan tuyết</span><span class="num serif b sm" style="color:var(--pr)">+2,6tr</span></div></div></div>
+</div>
+<div style="padding:0 20px 16px"><div class="caps" style="border-top:1px solid var(--fgm);padding-top:8px;margin-bottom:8px">Cũng đang diễn ra</div><div class="g4"><div class="stack"><div class="ph p1"></div><div class="caps mut">Lot 02 · 00:52</div><div class="serif b">iPhone 15 Pro Max</div><div class="num price">24.500.000 ₫</div></div><div class="stack"><div class="ph p4"></div><div class="caps mut">Lot 01 · 03:40</div><div class="serif b">Seiko Presage</div><div class="num price">9.800.000 ₫</div></div><div class="stack"><div class="ph p6"></div><div class="caps mut">Lot 04 · 14:30</div><div class="serif b">Fujifilm X-T5</div><div class="mut sm">Chưa bắt đầu</div></div><div class="stack"><div class="ph p5"></div><div class="caps mut">Lot 05 · 14:45</div><div class="serif b">Áo dài lụa</div><div class="mut sm">Chưa bắt đầu</div></div></div></div>
+</div></div></div>
+
+<h3>Phone: lot page and ledger</h3>
+<div class="phones">
+<div class="phone"><div class="m C">
+<div class="nav" style="border-bottom:1px solid var(--fgm)"><span class="logo">Atelier</span><span class="sp"></span><span class="caps">Lot 03/08</span></div>
+<div class="ph p2" style="aspect-ratio:4/4.2;border-radius:0"></div>
+<div style="padding:12px" class="stack"><div class="caps" style="color:var(--hot)">● Đang đấu giá</div><div class="serif" style="font-size:22px;font-weight:700;line-height:1.15">Tranh sơn mài Phố cổ Hội An</div><div class="between" style="border-top:1px solid var(--ln);padding-top:6px"><span class="num price serif" style="font-size:22px">14.200.000 ₫</span><span class="num serif b" style="color:var(--hot);font-size:18px">00:27</span></div><div class="row"><span class="pill out">Có giá cao hơn bạn</span></div></div>
+<div class="sticky stack"><div class="row"><span class="chip">+1 bước</span><span class="chip">+2</span><span class="chip">+5</span></div><div class="inp num serif" style="font-size:18px">14.700.000 ₫</div><div class="btn full">Đặt giá</div></div>
+</div></div>
+<div class="phone"><div class="m C">
+<div class="nav" style="border-bottom:1px solid var(--fgm)"><span class="logo">Sổ vàng</span><span class="sp"></span><span class="caps">Phiên 07</span></div>
+<div style="padding:12px" class="stack"><p class="sm mut">Xếp theo mức tăng giá so với giá khởi điểm.</p>
+<div class="list">
+<div style="align-items:flex-start"><span class="serif b" style="font-size:22px;width:30px;color:var(--gold)">I</span><div style="flex:1"><div class="serif b">Tranh lụa Thiếu nữ</div><div class="xs mut">Ng***n · 5tr → 14,2tr</div></div><span class="num serif b" style="color:var(--pr)">+9,2tr</span></div>
+<div style="align-items:flex-start"><span class="serif b" style="font-size:22px;width:30px">II</span><div style="flex:1"><div class="serif b">Nhẫn bạc chạm khắc</div><div class="xs mut">Tr***g · 1,5tr → 5,6tr</div></div><span class="num serif b" style="color:var(--pr)">+4,1tr</span></div>
+<div style="align-items:flex-start"><span class="serif b" style="font-size:22px;width:30px">III</span><div style="flex:1"><div class="serif b">Trà Shan tuyết cổ thụ</div><div class="xs mut">Lê***a · 0,8tr → 3,4tr</div></div><span class="num serif b" style="color:var(--pr)">+2,6tr</span></div>
+<div style="align-items:flex-start"><span class="serif b" style="font-size:22px;width:30px">IV</span><div style="flex:1"><div class="serif b">Sách cổ 1928</div><div class="xs mut">H***y · 0,8tr → 2,85tr</div></div><span class="num serif b" style="color:var(--pr)">+2,05tr</span></div>
+</div></div>
+</div></div>
+<div class="side-note box"><strong>Why roman numerals?</strong> They give the ledger its catalogue character on the top three rows only; from rank 4 onward (and in the screen-reader label) normal digits are used. The direction deliberately skips a dark ticker. Live activity shows up only as a brief gold flash on the price, which keeps the gallery calm.</div>
+</div>
+
+<h3>Auction detail: desktop</h3>
+<div class="frame"><div class="bar"><i></i><i></i><i></i><em>atelier-daugia.vn/lot/03</em></div><div class="scroll"><div class="m C">
+<div class="nav" style="border-bottom:1px solid var(--fgm)"><span class="caps">← Danh mục phiên 07</span><span class="sp"></span><span class="logo" style="font-size:20px">Atelier Đấu Giá</span><span class="sp"></span><span class="seg"><span class="on">VI</span><span>EN</span></span></div>
+<div style="padding:18px 20px;display:grid;grid-template-columns:70px 1.2fr 1fr;gap:18px">
+<div class="stack"><div class="ph p2" style="outline:1px solid var(--fgm);outline-offset:2px"></div><div class="ph p4"></div><div class="ph p3"></div></div>
+<div class="ph p2" style="aspect-ratio:4/5"></div>
+<div class="stack"><div class="caps mut">Lot 03 · Sơn mài</div><div class="serif" style="font-size:26px;font-weight:700;line-height:1.1">Tranh sơn mài Phố cổ Hội An</div><p class="sm mut">Lê Minh (b. 1975). 60 × 90 cm, 2019. Giá tham khảo 18.000.000 ₫.</p>
+<div class="surf pad stack"><div class="between"><span class="caps mut">Giá hiện tại</span><span class="caps" style="color:var(--hot)">00 : 27</span></div><div class="num price serif flash" style="font-size:30px">14.200.000 ₫</div><div class="row pop" style="color:var(--gold)"><span style="flex:1;border-top:1px solid #B08D57"></span><span class="caps">Gia hạn · +30 giây</span><span style="flex:1;border-top:1px solid #B08D57"></span></div></div>
+<div class="row"><span class="chip">+1 · 14,7tr</span><span class="chip">+2 · 15,2tr</span><span class="chip">+5 · 16,7tr</span></div>
+<div class="inp num serif ring" style="font-size:20px">14.700.000 ₫</div><div class="btn full">Đặt giá</div><div class="xs mut">Tối thiểu 14.700.000 ₫ · bước giá 500.000 ₫</div>
+<div class="caps" style="border-bottom:1px solid var(--fgm);padding-bottom:4px;margin-top:8px">Lịch sử</div><div class="list sm"><div><span style="width:60px">H***y</span><span class="num serif" style="flex:1">14.200.000 ₫</span><span class="xs mut">14:12:41</span></div><div><span style="width:60px">Bạn</span><span class="num serif" style="flex:1">13.700.000 ₫</span><span class="xs mut">14:12:20</span></div></div>
+</div></div></div></div></div>
+</section>
+
+<section id="motion">
+<h2>5. Interaction &amp; micro-interaction spec</h2>
+<p>These rules apply to every direction; only the colour tokens change. Durations assume <code>ease-out</code> unless noted. Every animated cue also has a non-motion equivalent (colour, text or icon) for <code>prefers-reduced-motion</code>.</p>
+<div class="tbl"><table class="t">
+<tr><th>Moment</th><th>Trigger</th><th>Visual / motion</th><th>Sound &amp; notification</th><th>Reduced motion</th></tr>
+<tr><td><b>Countdown heat</b></td><td>Server-synced remaining time (client offset from WS <code>serverTime</code>)</td><td>&gt;60 s neutral; 60–31 s warning colour; &le;30 s danger colour plus 1 Hz opacity pulse; &le;10 s digits scale 1.0→1.06 on each tick. At 0 the label becomes "Đang chốt…" until the server sends <code>closed</code>.</td><td>None (a ticking sound is fatiguing)</td><td>Colour and label change only, no pulse or scale</td></tr>
+<tr><td><b>Price change</b></td><td>WS <code>bid.accepted</code></td><td>Price background flashes the price tint for 600 ms; digits roll up over 250 ms; the new row slides into history (200 ms); bid count +1. The minimum next bid and quick buttons update in the same frame.</td><td>None for others' bids</td><td>Instant swap plus 600 ms tint, no roll</td></tr>
+<tr><td><b>+30 s extension</b></td><td>WS <code>auction.extended</code> (newEndTime)</td><td>Badge "+30 GIÂY / +30 s" pops out of the countdown (scale 0.6→1.12→1, 300 ms), stays 2.4 s, then fades. Countdown digits flip to the new value. The detail page also adds a history line: "Gia hạn đến 14:15:30".</td><td>Optional soft chime if the user is a participant in this lot</td><td>Badge appears without scaling; text remains</td></tr>
+<tr><td><b>Outbid</b></td><td>WS <code>bid.accepted</code> where previous leader = me</td><td>Toast (phone: top; desktop: bottom-right) for 8 s, or persistent while the countdown is &le;30 s. The status pill flips to "Bị vượt giá". Primary action "Trả [new min]" submits a bid at the new minimum, followed by a 3 s undo chip.</td><td>Two-tone 180 ms sound (mute toggle in header). If <code>document.hidden</code>, also a system notification: "Bạn đã bị vượt giá · iPhone 15 Pro Max · 25.000.000 ₫"; clicking it focuses the tab on that lot.</td><td>Toast fades rather than slides</td></tr>
+<tr><td><b>Same-price conflict</b></td><td>HTTP 409 / WS reject <code>PRICE_TOO_LOW</code></td><td>Input border turns danger colour with an inline message: "Có người vừa đặt giá này. Giá tối thiểu giờ là 25.500.000 ₫". The button relabels to "Đặt 25.500.000 ₫" with the value pre-filled, so one click re-bids.</td><td>Light haptic on mobile (<code>navigator.vibrate(30)</code>)</td><td>No shake animation</td></tr>
+<tr><td><b>Submitting</b></td><td>Click / Enter</td><td>Button shows a spinner and "Đang gửi…", and input and quick buttons are locked. The UI never shows "leading" before the ack. Timeout after 5 s shows "Chưa xác nhận, thử lại?".</td><td>None</td><td>Static spinner replaced with "…"</td></tr>
+<tr><td><b>Reconnecting</b></td><td>WS close / heartbeat miss &gt; 5 s</td><td>A full-width banner reads "Đang kết nối lại…" with the attempt count. Price is dimmed to 60% and labelled "cập nhật lúc 14:12:41"; the bid button is disabled. On reconnect, the client fetches a fresh snapshot before re-enabling and briefly shows "Đã kết nối lại".</td><td>None</td><td>Same</td></tr>
+<tr><td><b>Status pill</b></td><td>Derived from server state</td><td>Dẫn đầu / Leading (success), Bị vượt / Outbid (danger), Đã thắng / Won (gold), Không thắng / Lost (neutral), Đang theo dõi / Watching (neutral). Each pill carries an icon and text, never colour alone.</td><td>Won: notification plus confetti burst limited to 1 s (Direction A only)</td><td>No confetti</td></tr>
+<tr><td><b>Auction closed</b></td><td>WS <code>auction.closed</code></td><td>The bid form collapses into a result card: "Đã kết thúc · Giá chốt 26.000.000 ₫ · Người thắng Ng***n". The winners board row animates in on the home page.</td><td>Winner gets a notification; others get nothing</td><td>No row animation</td></tr>
+</table></div>
+</section>
+
+<section id="notif">
+<h2>6. Notification &amp; sound permission UX</h2>
+<div class="cols">
+<div>
+<ol>
+<li><b>Never ask on page load.</b> Browsers penalise this, and a cold prompt is usually denied.</li>
+<li><b>Soft-ask at the moment of value:</b> immediately after the user's <em>first successful bid</em>, show an inline card under the bid form: "Nhận thông báo khi có người trả cao hơn?" with the buttons <em>Bật thông báo</em> and <em>Để sau</em>.</li>
+<li>The <em>Bật thông báo</em> click is the user gesture. In the same handler, call <code>Notification.requestPermission()</code> and unlock audio (<code>AudioContext.resume()</code> plus playing the outbid sound once at low volume as confirmation).</li>
+<li><b>Granted:</b> show "Đã bật" and a bell icon in the header. <b>Denied:</b> show a short how-to ("Mở cài đặt trang › Thông báo › Cho phép") and fall back to in-tab toast, sound and title flashing (<code>(1) Bị vượt giá · …</code>).</li>
+<li><b>iOS Safari</b> only supports web push for home-screen PWAs. Show "Thêm vào màn hình chính để nhận thông báo" there and rely on sound and toast otherwise.</li>
+<li>Header controls: a bell toggle (notifications) and a speaker toggle (sound), both persisted per user.</li>
+</ol>
+</div>
+<div class="frame" style="align-self:start"><div class="m B" style="padding:14px"><div class="surf pad stack shadow" style="border-color:#BFD0FB;background:#F3F7FF"><div class="row"><span class="pill lead">✓ Đã đặt 25.000.000 ₫</span></div><div class="b">Nhận thông báo khi có người trả cao hơn?</div><div class="sm mut">Chúng tôi sẽ phát âm thanh và gửi thông báo trình duyệt khi bạn bị vượt giá, kể cả khi bạn đang ở tab khác.</div><div class="row"><div class="btn">Bật thông báo</div><div class="btn ghost">Để sau</div></div><div class="xs mut">EN: “Get notified when someone outbids you?” · Enable / Not now</div></div></div></div>
+</div>
+</section>
+
+<section id="a11y">
+<h2>7. Accessibility</h2>
+<div class="cols">
+<div class="box"><b>Contrast (WCAG 2.2 AA).</b> Checked pairs: A lime #C6FF3D on #0B0D17 ≈ 16:1; white on CTA #E11D48 ≈ 4.7:1; muted #8F98BD on #0B0D17 ≈ 6.6:1. B price #C2410C on white ≈ 5.2:1; primary #1D4ED8 ≈ 6.7:1. C oxblood #7A1F2B on ivory ≈ 9:1; decorative gold #B08D57 is used only for rules and icons, with #7D5F2A for gold text (≈ 5:1).</div>
+<div class="box"><b>Focus &amp; targets.</b> Visible 3 px focus ring (<code>:focus-visible</code>) in each theme's focus colour with a 2 px offset. Minimum target size is 44 × 44 px on touch, and quick-step chips are 48 px high on phones. Enter in the price input submits, and Esc dismisses a toast.</div>
+<div class="box"><b>Live regions.</b> One visually hidden <code>aria-live="polite"</code> region per lot announces price changes, throttled to at most one announcement every 5 s with the latest value ("Giá mới 25.000.000 đồng, Ph***h"). Outbid and errors use <code>role="alert"</code>. The countdown is <em>not</em> live; it announces only at 60 s, 30 s and 10 s and on extension ("Gia hạn thêm 30 giây").</div>
+<div class="box"><b>Reduced motion.</b> <code>prefers-reduced-motion: reduce</code> disables pulse, roll, pop, slide and confetti, and keeps colour plus text changes. Sound is independent of motion and controlled by the speaker toggle.</div>
+<div class="box"><b>Semantics.</b> Status is never conveyed by colour alone (icon and text). Masked names get an <code>aria-label</code> ("Người đấu giá ẩn danh Ng…n") so screen readers do not read out the asterisks. Prices carry a full accessible name even when abbreviated ("25,5TR" → "25.500.000 đồng").</div>
+<div class="box"><b>Language.</b> <code>&lt;html lang="vi"&gt;</code> or <code>"en"</code> switches with the locale so screen readers use the right voice. Mixed snippets get <code>lang</code> on the element.</div>
+</div>
+</section>
+
+<section id="responsive">
+<h2>8. Responsive rules</h2>
+<div class="tbl"><table class="t">
+<tr><th>Breakpoint</th><th>Home</th><th>Auction detail</th><th>Navigation</th></tr>
+<tr><td>&lt; 640 px (phone)</td><td>Single column: campaign strip → live cards (list rows in B, hero card in A/C) → up next → winners top 3 with "Xem tất cả"</td><td>Gallery as a swipe carousel at 1:1 aspect; price and countdown block directly under the title; <b>sticky bid bar</b> (chips plus input plus button) with <code>env(safe-area-inset-bottom)</code>; history collapsed to the last 5</td><td>Bottom tab bar (4 items); language and currency move into the account sheet</td></tr>
+<tr><td>640–1023 px (tablet)</td><td>Two-column card grid; winners board below</td><td>Gallery on top, bid panel below as a card; bid bar not sticky</td><td>Top bar with compact switchers</td></tr>
+<tr><td>&ge; 1024 px (laptop)</td><td>Main area plus 260–300 px right rail (Up next and winners)</td><td>Two columns: gallery and description left, sticky bid panel right (<code>position: sticky; top: 16px</code>)</td><td>Full top bar</td></tr>
+<tr><td>&ge; 1440 px</td><td>Content max width 1280 px; A can enter "stage mode" for projectors (fullscreen featured lot, ticker, QR code to join)</td><td>Same, larger gallery</td><td>Same</td></tr>
+</table></div>
+<p>Price type uses <code>clamp(24px, 6vw, 40px)</code>. Numbers always use <code>tabular-nums</code> so layouts don't shift on every bid. Long Vietnamese product names wrap to 2 lines with <code>line-clamp</code> on cards and are never truncated on the detail page.</p>
+</section>
+
+<section id="i18n">
+<h2>9. Language &amp; currency</h2>
+<div class="cols">
+<div class="box"><b>Language switcher.</b> A segmented "VI | EN" control in the header (desktop) or account sheet (phone). The default comes from the profile, then <code>localStorage</code>, then <code>navigator.language</code>, then <code>vi</code>. Switching changes UI copy only, never product content (admin may optionally enter an EN name and description; if absent, show the VI text with a small "VI" tag). Copy is about 30% longer in EN, so buttons must not have a fixed width.</div>
+<div class="box"><b>Currency.</b> Currency is a <em>campaign</em> setting (VND or USD) chosen by the admin, not an FX conversion, so all bids for a lot are in one currency. Format with <code>Intl.NumberFormat</code>: <code>vi-VN</code> VND gives <code>1.200.000 ₫</code> (no decimals); <code>en-US</code> USD gives <code>$1,250</code> (decimals only if the step is fractional). EN locale with VND shows <code>₫1,200,000</code>. The "₫ | $" toggle in mockups shows this campaign setting; a display-only approximate conversion could later be shown as muted text "≈ $980".</div>
+<div class="box"><b>Input.</b> The price input accepts digits only, formats with separators as you type, and supports the short forms "25tr" / "25m" → 25.000.000. It validates <code>&ge; current + step</code> inline before submission.</div>
+</div>
+</section>
+
+<section id="edge">
+<h2>10. Empty &amp; edge states</h2>
+<p>Rendered in Direction B tokens. The copy and structure apply to all three.</p>
+<div class="frame"><div class="m B"><div class="mini-state">
+<div class="surf pad stack"><div class="lbl">Same price, a moment too late</div><div class="inp num err">25.000.000 ₫</div><div class="sm" style="color:var(--hot)" role="alert">Có người vừa đặt 25.000.000 ₫. Giá tối thiểu giờ là 25.500.000 ₫.</div><div class="btn full">Đặt 25.500.000 ₫</div></div>
+<div class="surf pad stack" style="padding:0;overflow:hidden"><div class="banner" style="background:#FEF0C7;color:#93370D"><span class="spin"></span>Đang kết nối lại… (lần 2)</div><div class="pad stack"><div class="num price" style="opacity:.6;font-size:20px">24.500.000 ₫</div><div class="xs mut">Cập nhật lúc 14:12:41</div><div class="btn full dis">Tạm khoá đặt giá</div></div></div>
+<div class="surf pad stack"><div class="lbl">Auction closed</div><div class="row"><span class="pill soon">Đã kết thúc</span></div><div class="b">Giá chốt <span class="num price">26.000.000 ₫</span></div><div class="sm mut">Người thắng: Ng***n · 47 lượt đặt</div><div class="btn ghost full">Xem sản phẩm tiếp theo →</div></div>
+<div class="surf pad stack"><div class="lbl">Won</div><div class="row"><span class="pill won">★ Bạn đã thắng</span></div><div class="sm">Tranh lụa Thiếu nữ · <b class="num">14.200.000 ₫</b></div><div class="sm mut">Ban tổ chức sẽ liên hệ trong 24 giờ để hướng dẫn thanh toán và nhận hàng.</div></div>
+<div class="surf pad stack"><div class="lbl">No live item (between slots)</div><div class="b">Chưa có sản phẩm đang đấu giá</div><div class="sm mut">Tiếp theo: <b>Fujifilm X-T5</b> lúc 14:30</div><div class="num b" style="font-size:22px">Bắt đầu sau 04:12</div><div class="btn ghost full">Nhắc tôi</div></div>
+<div class="surf pad stack"><div class="lbl">No active campaign</div><div class="b">Chưa có phiên đấu giá nào đang diễn ra</div><div class="sm mut">Phiên kế tiếp: <b>Đấu giá Cuối Năm</b>, 20/12/2026 19:00. Kết quả phiên trước vẫn có trong Bảng xếp hạng.</div></div>
+<div class="surf pad stack"><div class="lbl">Not logged in</div><div class="sm">Bạn cần đăng nhập để đặt giá.</div><div class="btn full">Đăng nhập để đặt 25.000.000 ₫</div><div class="xs mut">The entered price is kept and restored after login; the minimum is re-checked.</div></div>
+<div class="surf pad stack"><div class="lbl">Empty My bids / winners board</div><div class="b">Bạn chưa đặt giá sản phẩm nào</div><div class="sm mut">Các sản phẩm đang diễn ra ở trang chủ.</div><div class="btn ghost full">Xem đấu giá đang diễn ra</div><div class="xs mut">Winners board empty: "Bảng xếp hạng sẽ xuất hiện khi sản phẩm đầu tiên kết thúc."</div></div>
+</div></div></div>
+<p class="meta">Also handle: session expired mid-bid (re-auth modal keeps the input); lot started early or was delayed by the admin (Up next times update live with a "đã đổi giờ" tag); bid below minimum client-side (inline, no request sent); sound blocked by autoplay policy (speaker icon shows a slash and is clickable to unlock); clock skew (countdown always derived from server time).</p>
+</section>
+
+<section id="other">
+<h2>11. My bids, login &amp; admin (brief)</h2>
+<div class="cols">
+<div class="box"><b>My bids.</b> Tabs <em>Tất cả / Dẫn đầu / Bị vượt / Đã thắng</em> (see the Direction B phone mockup). Outbid rows sort to the top while the lot is live and carry an inline "Đặt lại [min]" button. Won rows show next steps (contact, payment).</div>
+<div class="box"><b>Login.</b> A single centred card with username, password, "Hiện mật khẩu" toggle and a VI/EN switch; the error "Sai tên đăng nhập hoặc mật khẩu" does not say which field is wrong. A reserved slot below the form ("Đăng nhập bằng SSO công ty") is hidden until SSO ships. After login the user returns to the lot they came from.</div>
+<div class="box"><b>Admin.</b> Uses shadcn defaults in every direction (no theming). <em>Products</em>: data table plus a sheet form (images drag-to-reorder, prices with VND formatting, start/end, extend window, extend-by). <em>Campaign</em>: drag-to-reorder list with auto-computed start times and conflict warnings. <em>Live monitor</em>: per-lot cards with current price, bids/min, connected users, last extension, and a "Tạm dừng lot" action behind a confirmation.</div>
+</div>
+</section>
+
+<section id="compare">
+<h2>12. Comparison &amp; recommendation</h2>
+<div class="tbl"><table class="t">
+<tr><th>Criterion</th><th>A · Arena Live</th><th>B · Chợ Phiên</th><th>C · Atelier</th></tr>
+<tr><td>Implementation effort (Tailwind + shadcn/ui)</td><td><span class="dots">●●●○○</span> Medium: dark theme tokens, ticker, glow and stage mode are custom</td><td><span class="dots">●○○○○</span> Lowest: near-default shadcn (Card, Tabs, Badge, Sonner, Table)</td><td><span class="dots">●●●○○</span> Medium: custom type scale, serif numerals, editorial grids, image-quality dependency</td></tr>
+<tr><td>Excitement / live feel</td><td><span class="dots">●●●●●</span></td><td><span class="dots">●●●○○</span></td><td><span class="dots">●●○○○</span></td></tr>
+<tr><td>Readability on phones (daylight, glance)</td><td><span class="dots">●●●○○</span> Great at night, weaker in sunlight</td><td><span class="dots">●●●●●</span></td><td><span class="dots">●●●○○</span> Serif prices are legible; small caps need care</td></tr>
+<tr><td>Brand flexibility (re-skin for a client)</td><td><span class="dots">●●○○○</span> The look is the brand</td><td><span class="dots">●●●●●</span> Swap primary and price tokens</td><td><span class="dots">●●●○○</span> Suits premium brands only</td></tr>
+<tr><td>Audience fit</td><td>Young, tech, events, big screen</td><td>Everyone, especially phone-first daytime bidders</td><td>Art, craft, luxury, VIP</td></tr>
+<tr><td>Risk</td><td>Fatigue and over-stimulation, accessibility of glow and pulse</td><td>Can feel generic</td><td>Calmness may undersell urgency</td></tr>
+</table></div>
+
+<div class="note">
+<p><b>Recommendation: build Direction B (Chợ Phiên) as the product foundation, and add Direction A's "live layer" for urgent moments.</b></p>
+<p>B is the fastest to ship on Tailwind + shadcn/ui, the most legible for phone-first bidders in daylight, and the easiest to re-brand per campaign. Its weakness is energy, so borrow the parts of A that carry the event: the lime/red price-flash and countdown-heat behaviour (mapped to B's orange and red tokens), the "+30 GIÂY" pop badge, the masked bid ticker on the home page, and an optional dark <em>stage mode</em> for projecting the live lot at the venue. Keep C as a <em>theme preset</em> for future art or gala campaigns. Because all three share the same component set and token names (<code>--pri</code>, <code>--pr</code>, <code>--hot</code>, <code>--ext</code>…), C becomes a token file plus a serif font rather than a second UI.</p>
+<p><b>Next steps:</b> (1) validate B and the live layer with a clickable prototype on 5 phone users during a mock 10-minute campaign; (2) lock the token file and the shadcn component variants; (3) record and test the outbid sound on budget Android phones; (4) review Vietnamese copy with a native editor.</p>
+</div>
+</section>
+
+<p class="meta" style="margin-top:40px">End of document · All prices, names and products are illustrative sample data.</p>
+</div>
+</body>
+</html>
