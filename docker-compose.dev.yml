@@ -1,0 +1,22 @@
+# Development infrastructure only (Postgres + Redis). The apps run on the host with `pnpm dev`.
+# Usage: docker compose -f docker-compose.dev.yml up -d   (or: pnpm db:up)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: auction
+      POSTGRES_USER: auction
+      POSTGRES_PASSWORD: auction
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auction"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6380:6379"]
+volumes:
+  pgdata: {}

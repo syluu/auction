@@ -1,0 +1,29 @@
+# Reverse proxy for the auction stack.
+# CADDY_SITE = ":80"                 -> plain HTTP (local trial, or behind another TLS terminator)
+# CADDY_SITE = "auction.example.com" -> automatic HTTPS via Let's Encrypt (ports 80 and 443 must reach this host)
+{$CADDY_SITE} {
+	encode zstd gzip
+	request_body {
+		max_size 10MB
+	}
+
+	# uploaded product images, served straight from the shared volume
+	handle_path /uploads/* {
+		root * /var/www/uploads
+		header Cache-Control "public, max-age=604800"
+		file_server
+	}
+
+	# REST API and Socket.IO (websocket upgrade is handled automatically)
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+	handle /socket.io/* {
+		reverse_proxy api:4000
+	}
+
+	# everything else: Next.js
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -13,13 +13,44 @@ apps/api        NestJS API: auth, products, campaigns, auctions, bids (row-locke
 apps/web        Next.js UI: /vi (default) and /en routes, main page, auction detail, my bids, login, admin
 packages/shared Types, socket event names, zod schemas, money formatting (VND / USD)
 load/           k6 script (100 concurrent bidders)
-deploy/         production docker-compose + nginx
+deploy/         Caddyfile for the Docker stack (reverse proxy, uploads, automatic HTTPS)
 ```
 
-## Run locally
+## Deploy with Docker (one command)
+Needs Docker Engine with Compose v2 on the host; nothing else.
+
+```bash
+git clone https://github.com/syluu/auction.git && cd auction
+./deploy.sh                                 # local trial at http://localhost
+./deploy.sh https://auction.example.com     # public server: automatic HTTPS (DNS must point here, ports 80/443 open)
+./deploy.sh http://203.0.113.10             # public server by IP, plain HTTP
+./deploy.sh --seed                          # add the demo campaign + demo users on first start
+```
+The first run writes `.env` with random secrets (database password, JWT secret, admin password) and prints the admin
+login. Keep that file: it is the only copy of the secrets, and `PG_PASSWORD` must match the database volume.
+Later runs of `./deploy.sh` (or `docker compose up -d --build`) rebuild the images and restart with the same settings.
+`git pull && ./deploy.sh` is the whole upgrade procedure; migrations run automatically at API start.
+
+What runs (`docker-compose.yml`): `proxy` (Caddy 2: TLS, `/api`, `/socket.io`, `/uploads`, everything else to Next.js),
+`web` (Next.js standalone), `api` (NestJS; migrates, optionally seeds, bootstraps the admin account), `postgres` 16, `redis` 7.
+Data lives in named volumes `postgres-data`, `redis-data`, `uploads`. Only the proxy publishes ports.
+
+```bash
+docker compose logs -f api            # follow logs
+docker compose ps                     # health of each service
+docker compose down                   # stop (data kept)        add -v to delete all data
+docker compose exec postgres pg_dump -U auction auction > backup.sql
+```
+Settings are plain variables in `.env` (template: `.env.docker.example`): `PUBLIC_URL`, `CADDY_SITE` (`:80` for plain
+HTTP or a domain for automatic HTTPS), `HTTP_PORT`/`HTTPS_PORT`, `AUTH_MODE`, `SEED_DEMO`, `AUTO_BID_DELAY_MS`, and the
+secrets. The admin account is re-synced from `ADMIN_USERNAME`/`ADMIN_PASSWORD` on every API start, so changing the password
+in `.env` and restarting is how you rotate it. To put the stack behind an existing TLS terminator (Cloudflare, a company
+nginx), keep `CADDY_SITE=:80`, set `PUBLIC_URL` to the public https address and forward to `HTTP_PORT`.
+
+## Run locally (development)
 ```bash
 pnpm install
-docker compose up -d postgres redis          # Postgres on :5433, Redis on :6380
+pnpm db:up                                   # Postgres on :5433, Redis on :6380 (docker-compose.dev.yml)
 pnpm --filter @auction/shared build
 cp .env.example apps/api/.env                # already present in dev; edit if needed
 cd apps/api && npx prisma migrate dev && npx ts-node prisma/seed.ts && cd ../..
@@ -49,10 +80,4 @@ Currency is set per campaign (`VND` default, or `USD`). UI language comes from t
 ## Load test
 ```bash
 k6 run -e AUCTION_ID=<live id> load/bids.k6.js        # 100 VUs, 60 s, p95 bid latency < 150 ms
-```
-
-## Production
-```bash
-cp deploy/.env.example deploy/.env && edit it
-docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build
 ```

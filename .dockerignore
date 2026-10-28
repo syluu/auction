@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+docs
+load
+deploy
+uploads
+pgdata
+README.md

@@ -56,7 +56,7 @@ export class AuthController {
     res.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: env.NODE_ENV === 'production',
+      secure: env.WEB_ORIGIN.startsWith('https://'),
       maxAge: SESSION_TTL_SEC * 1000,
       path: '/',
     });
